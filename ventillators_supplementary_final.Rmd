@@ -1,0 +1,2482 @@
+---
+title: "Supplementary Appendix for 'Polarized citizen preferences for the ethical allocation of scarce medical resources in twenty countries'"
+author: "E Awad, B Bago, JF Bonnefon, NA Christakis, I Rahwan, A Shariff"
+
+
+output:
+  rmarkdown::pdf_document:
+    extra_dependencies: ["float"]
+    fig_caption: yes
+    latex_engine: xelatex
+mainfont: Times New Roman
+fontsize: 10pt
+        
+
+header-includes: 
+  \usepackage{float} \floatplacement{figure}{H} 
+  \newcommand{\beginsupplement}{\setcounter{table}{0}  \renewcommand{\thetable}{S\arabic{table}} \setcounter{figure}{0} \renewcommand{\thefigure}{S\arabic{figure}}}
+
+      
+
+---
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, incluede=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo=FALSE)
+library(plyr)
+library(dplyr)
+library(lmerTest)
+library(doBy)
+library(tidyverse)
+library(kableExtra)
+library(reshape2)
+
+
+
+setwd("C:/Users/Bence/OneDrive/Documents/research/ventillators")
+load("C:/Users/Bence/OneDrive/Documents/research/ventillators/Main_data_MM_corrected.rdata")
+d$country=factor(d$country)
+Main_MM <- d
+load("C:/Users/Bence/OneDrive/Documents/research/ventillators/Main_data_Yougov.rdata")
+Main_Yougov <- d.demo.common
+Main_Yougov=subset(Main_Yougov, select=c(-subset, -features))
+load("C:/Users/Bence/OneDrive/Documents/research/ventillators/Main_data_Yougov_without_pay_in_features.rdata")
+d=subset(d, select=c(id, features, subset, country, question))
+Main_Yougov=merge(Main_Yougov, d, by=c("id", "country", "question"))
+
+load("C:/Users/Bence/OneDrive/Documents/research/ventillators/Subject_data_MM.rdata")
+Main_MM =merge(Main_MM, Subject_Information_MM, by=c("id"))
+load("C:/Users/Bence/OneDrive/Documents/research/ventillators/MM_with_pay.rdata")
+d=subset(d, select=c("id", "Pay", "question"))
+Main_MM =merge(Main_MM, d, by=c("id", "question"))
+load("C:/Users/Bence/OneDrive/Documents/research/ventillators/US_specific_data.Yougov.rdata")
+Us_Yougov <- d.demo.us
+rm(list=c("d", "d.demo.common", "d.demo.us", "Subject_Information_MM"))
+   
+France_Yougov <- read.csv("Frenc_specific_Yougov.csv", header=T, sep=";", stringsAsFactors = T)
+France_Yougov <- subset(France_Yougov, country=="FR")
+
+apply_if <- function(mat, p, f) {
+  p[is.na(p)] <- FALSE
+  mat[p] <- f(mat[p])
+  mat
+}
+
+
+```
+\beginsupplement
+
+#**1 Samples** 
+
+
+```{r demographics, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+options(OutDec="\xB7")
+
+
+sex_MM=round(prop.table(table(Main_MM$country, Main_MM$survey_demography_gender),1)*100,0)
+age_MM=summaryBy(survey_demography_age ~ country, data=Main_MM[Main_MM$question=="Allocations", ], FUN=c(mean,sd),na.rm=T)
+know_MM=round(prop.table(table(Main_MM$country, Main_MM$survey_knowPatient),1)*100,0)
+Main_MM$survey_demography_political=1-Main_MM$survey_demography_political
+Main_MM$conservative=ifelse(Main_MM$survey_demography_political > 0.5, 1, 0)
+N = Main_MM %>%
+  filter(question=="Allocations")%>%
+  group_by(country) %>%
+  summarize(N = n())
+politics_MM=summaryBy(conservative ~ country, data=Main_MM[Main_MM$question=="Allocations", ], FUN=c(mean,sd),na.rm=T)
+MM_dem=data.frame(country=politics_MM$country, sex_MM=sex_MM[,3], age_MM=paste0(round(age_MM$survey_demography_age.mean,1), " (",round(age_MM$survey_demography_age.sd,1), ")"), know_MM=know_MM[,3], politics_MM=round(politics_MM$conservative.mean*100,0), N=N$N)
+
+sex_Yougov=round(prop.table(table(Main_Yougov$country, rbind(Main_Yougov$sex)),1)*100,0)
+age_Yougov=summaryBy(age ~ country, data=Main_Yougov[Main_Yougov$question=="Allocations", ], FUN=c(mean,sd),na.rm=T)
+smoke_Yougov=round(prop.table(table(Main_Yougov$country, Main_Yougov$smoke),1)*100,0)
+know_Yougov=round(prop.table(table(Main_Yougov$country, Main_Yougov$knows.covid),1)*100,0)
+health_Yougov=summaryBy(health ~ country, data=Main_Yougov[Main_Yougov$question=="Allocations", ], FUN=c(mean,sd),na.rm=T)
+country=factor(c("BRA", "FRA", "JPN", "USA"))
+Yougov_dem=data.frame(country=country, sex_Yougov=unname(sex_Yougov[,2]), age_Yougov=paste0(round(age_Yougov$age.mean,1), " (",round(age_Yougov$age.sd,1), ")"), know_Yougov=know_Yougov[,2], health_Yougov=round(health_Yougov$health.mean,1), smoke_Yougov=unname(smoke_Yougov[,2]))
+
+Main_MM$exclude=ifelse(is.na(Main_MM$First)==TRUE|is.na(Main_MM$Random)==TRUE|is.na(Main_MM$Years)==TRUE|
+                         is.na(Main_MM$Past)==TRUE|is.na(Main_MM$Future)==TRUE|is.na(Main_MM$Prognosis)==TRUE|is.na(Main_MM$Quality)==TRUE,0,1)
+
+
+#France specific
+#education, politics
+#education_fr
+
+France_Yougov$education_fr=factor(France_Yougov$education_fr)
+attach(France_Yougov)
+France_Yougov$education=ifelse(education_fr=="Bachelor's or License degree/ College"|education_fr=="Master's degree/PhD or over",1,0)
+detach(France_Yougov)
+fra_edu=round(mean(France_Yougov$education, na.rm=T)*100,1)
+
+
+#pol_id_scale
+## MM is in a scale from 0(conservative) to 1(liberal) 
+attach(France_Yougov)
+France_Yougov$political=ifelse(pol_id_scale_fr=="Tr??s ?  gauche",0, ifelse(pol_id_scale_fr=="A gauche", 0.25, ifelse(pol_id_scale_fr=="Au centre"|pol_id_scale_fr=="Ni ?  gauche, ni ?  droite",0.5, ifelse(pol_id_scale_fr=="A droite", 0.75, ifelse(pol_id_scale_fr=="Tr??s ?  droite",1,NA)))))
+detach(France_Yougov)
+France_Yougov$conserv=ifelse(France_Yougov$political > 0.5,1,0)
+
+fra_pol=round(mean(France_Yougov$conserv,na.rm=T)*100,1)
+france=data.frame(country=factor("FRA"), politics_Yougov=fra_pol, education_Yougov=fra_edu)
+
+
+
+#####USA ideo5,race,educ
+#education
+attach(Us_Yougov)
+Us_Yougov$education=ifelse(educ=="2-year"|educ=="4-year"|educ=="Post-grad", 1,0)
+detach(Us_Yougov)
+us_education=round(mean(Us_Yougov$education, na.rm=T)*100,1)
+
+#ideology
+attach(Us_Yougov)
+Us_Yougov$political=ifelse(ideo5=="Very liberal",0, ifelse(ideo5=="Liberal", 0.25, ifelse(ideo5=="Moderate",0.5, ifelse(ideo5=="Conservative", 0.75, ifelse(ideo5=="Very conservative",1,NA)))))
+detach(Us_Yougov)
+Us_Yougov$conserv=ifelse(Us_Yougov$political > 0.5,1,0)
+
+us_ideology=round(mean(Us_Yougov$conserv,na.rm=T)*100,1)
+
+#race
+Us_Yougov$race_re=ifelse(Us_Yougov$race=="White", 1, 0)
+us_race=round(mean(Us_Yougov$race_re, na.rm=T)*100,1)
+
+#pew_religimp
+attach(Us_Yougov)
+Us_Yougov$religious=ifelse(religpew=="Agnostic"|religpew=="Atheist"|religpew=="Nothing in particular",0,1)
+Us_Yougov$religimp=ifelse(pew_religimp=="Not at all important"|pew_religimp=="Not too important",0,1)
+detach(Us_Yougov)
+#x% identifies with a religion
+us_religious=round(mean(Us_Yougov$religious,na.rm=T)*100,1)
+usa=data.frame(country=factor("USA"), religious_Yougov=us_religious, education_Yougov=us_education, politics_Yougov=us_ideology, race_Yougov=us_race)
+Yougov_dem2=Reduce(function(x, y) merge(x, y, by=c("country", "education_Yougov", "politics_Yougov"), all=TRUE), list(usa, france))
+Yougov_dem=Reduce(function(x, y) merge(x, y, by=c("country"), all=TRUE), list(Yougov_dem,Yougov_dem2))
+
+
+row.names(MM_dem) <- NULL
+row.names(Yougov_dem) <- NULL
+library(papaja)
+library(kableExtra)
+
+#####full triage vs no triage profiles
+Main_MM$gender=ifelse(Main_MM$survey_demography_gender=="male", 1, 0)
+Main_MM$patient=ifelse(Main_MM$survey_knowPatient=="yes",1, 0)
+profile_MM = Main_MM %>%
+  filter(question=="Allocations" & subset!="Others" & exclude==1)%>%
+  group_by(country, subset)%>%
+  summarise(M_age = round(mean(survey_demography_age, na.rm=T),1),
+            M_male = round(mean(gender, na.rm=T)*100,1),
+            M_know = round(mean(patient, na.rm=T)*100,1),
+            M_conservative = round(mean(conservative, na.rm=T)*100,1))
+
+myspread <- function(df, key, value) {
+    keyq <- rlang::enquo(key)
+    valueq <- rlang::enquo(value)
+    s <- rlang::quos(!!valueq)
+    df %>% gather(variable, value, !!!s) %>%
+        unite(temp, !!keyq, variable) %>%
+        spread(temp, value)
+}
+
+t2 <-profile_MM %>% myspread(subset, c(M_age, M_male, M_know, M_conservative))
+mm_t2 <- t2[, c(1,2,6,5,9,4,8,3,7)]
+
+###Yougov same
+###countries one by one.
+#sex, smoke, knows.covid recode, health age same, USA: religion, politics, education, race; France: education, politics
+#by country
+Main_Yougov$subset=factor(Main_Yougov$subset)
+Main_Yougov$gender=ifelse(Main_Yougov$sex=="Male", 1, 0)
+Main_Yougov$patient=ifelse(Main_Yougov$knows.covid=="Yes",1, 0)
+Main_Yougov$smoker=ifelse(Main_Yougov$smoke=="Yes", 1, 0)
+
+profile_YG = Main_Yougov %>%
+  filter(question=="Allocations" & subset!="Others")%>%
+  group_by(country, subset)%>%
+  summarise(Age = paste0(round(mean(age, na.rm=T),2), " (",round(sd(age, na.rm=T),2), ")"  ),
+            Gender = round(mean(gender, na.rm=T)*100,1),
+            M_know = round(mean(patient, na.rm=T)*100,1),
+            Health = round(mean(health, na.rm=T),1),
+            Smoker = round(mean(smoker, na.rm=T)*100,1))
+
+t1=melt(profile_YG, id.vars=c("country", "subset"))
+yg_t2=dcast(t1, country+variable ~ subset)
+
+
+#France
+France_Yougov$id=France_Yougov$caseid
+france=subset(France_Yougov, select=c("id", "conserv", "education"))
+france=merge(Main_Yougov,france, by="id")
+
+france = france %>%
+  filter(question=="Allocations" & subset!="Others" )%>%
+  group_by(subset)%>%
+  summarise(politics = round(mean(conserv, na.rm=T)*100,1),
+            education = round(mean(education, na.rm=T)*100,1))
+
+t1=melt(france, id.vars=c( "subset"))
+t_fr=dcast(t1, variable ~ subset)
+t_fr$country="France"
+
+#add france to table 
+
+#US
+Us_Yougov$subset=factor(Us_Yougov$subset)
+
+us = Us_Yougov %>%
+  filter(question=="Allocations" & subset!="Others" )%>%
+  group_by(subset)%>%
+  summarise(politics = round(mean(conserv, na.rm=T)*100,1),
+            education = round(mean(education, na.rm=T)*100,1),
+            race_re = round(mean(race_re, na.rm=T)*100,1),
+            religious = round(mean(religious, na.rm=T)*100,1))
+
+t1=melt(us, id.vars=c( "subset"))
+t_us=dcast(t1, variable ~ subset)
+t_us$country="USA"
+
+yg_comp=Reduce(function(x, y) merge(x, y, by=c("country", "Full Triage", "No Triage", "variable"), all=TRUE), list(t_us, t_fr,yg_t2))
+yg_comp$variable<-as.character(yg_comp$variable)
+yg_comp<-yg_comp[order(yg_comp$country, toupper(yg_comp$variable)), c(1,4,2,3)]
+yg_comp$variable=factor(yg_comp$variable, levels=c("Age","education","race_re", "Gender", "Health", "M_know","politics","religious", "Smoker"), labels=c("Age", "College", "White", "Gender (% of men)", "Health", "Know COVID patient", "Politics", "Religious", "Smoker" ))
+
+#compare: sex smoke knows.covid age, health; usa, france: politics
+#take MM and Yougov samples, make one data set, one variable coding Yougov or MM
+#save it in a table
+MM=subset(Main_MM, question=="Allocations" & (country=="FRA"|country=="BRA"|country=="JPN"|country=="USA"), select=c(gender, patient, survey_demography_political, survey_demography_age, country))
+colnames(MM)[3] <- "political"
+colnames(MM)[4] <- "age"
+MM$survey="MM"
+MM$country=as.character(MM$country)
+MM$country=factor(MM$country, levels=c("BRA", "FRA", "JPN", "USA"), labels=c("Brazil", "France", "Japan", "USA"))
+
+YG=subset(Main_Yougov, question=="Allocations", select=c(country, gender, patient,age, id))
+fra=subset(France_Yougov,  select=c(political,id))
+fra$country="France"
+us=subset(Us_Yougov, question=="Allocations", select=c(political,id))
+us$country="USA"
+
+YG2=Reduce(function(x, y) merge(x, y, by=c("id", "country", "political"), all=TRUE), list(fra, us))
+YG=Reduce(function(x, y) merge(x, y, by=c("id", "country"), all=TRUE), list(YG,YG2))
+
+YG$survey="Yougov"
+YG=YG[, -1]
+
+full=Reduce(function(x, y) merge(x, y, by=c("country", "political", "age", "gender", "patient", "survey"), all=TRUE), list(YG, MM))
+
+full$gender=ifelse(full$gender==1, 0.5, -0.5)
+full$patient=ifelse(full$patient==1,0.5, -0.5)
+
+dem_diff=data.frame(country=levels(full$country), t_age=rep(0,4), p_age=rep(0,4), chi_patient=rep(0,4), p_patient=rep(0,4),chi_gender=rep(0,4), p_gender=rep(0,4), t_pol=rep(NA,4), p_pol=rep(NA,4))
+full$survey=factor(full$survey)
+
+count=1
+for (i in levels(full$country)){
+  res=t.test(age ~ survey, data=full[full$country==i,], na.action=na.omit)
+  dem_diff$t_age[count]=round(unname(res$statistic),2)
+  dem_diff$p_age[count]=round(unname(res$p.value),3)
+  
+  res= chisq.test(table(full[full$country==i, ]$patient, full[full$country==i, ]$survey))
+  dem_diff$chi_patient[count]=round(unname(res$statistic),2)
+  dem_diff$p_patient[count]=round(unname(res$p.value),3)
+  
+  res= chisq.test(table(full[full$country==i, ]$gender, full[full$country==i, ]$survey))
+  dem_diff$chi_gender[count]=round(unname(res$statistic),2)
+  dem_diff$p_gender[count]=round(unname(res$p.value),3)
+
+  if (i=="France"|i=="USA"){
+  res=t.test(political ~ survey, data=full[full$country==i,], na.action=na.omit)
+  dem_diff$t_pol[count]=round(unname(res$statistic),2)
+  dem_diff$p_pol[count]=round(unname(res$p.value),3)
+  }
+count=count+1
+}
+
+mypvalue <- function (x) {
+  if(is.numeric(x) ) {
+    t=NULL
+    for (i in 1:length(x)) {
+          if (is.na(x[i])){
+            t[i]<-NA
+        } else if(abs(as.numeric(x[i])) < 0.0001  ) {
+            t[i]<-"$< 0{\\cdot}0001$"
+        } else if(abs(as.numeric(x[i])) < 0.001) {
+            t[i]<-"$< 0{\\cdot}001$"
+        } else {
+        t[i]<-x[i]
+        }
+      }
+  } else {
+    return(x)
+  }
+  return(t)
+}
+
+
+for (i in colnames(dem_diff)){
+  dem_diff[, i] <-mypvalue(dem_diff[,i])
+}
+
+
+
+```
+##**1.1 General description**
+The Yougov nationally representative panels in Brazil, France, Japan and the USA each comprised 1,000 individuals whose demographic characteristics are displayed in Table S1. Not all characteristics were measured in all countries (for example, religion and race were only recorded in the US sample).
+
+The Moral Machine sample included 7599 participants from from `r nlevels(Main_MM$country)` countries. These participants self-selected into the survey, which led to variations in sample size and sample characteristics across countries, as displayed in Table S2. The average age of the participants is M = `r round(mean(age_MM$survey_demography_age.mean, na.rm=T),1)` (SD = `r round(sd(age_MM$survey_demography_age.mean, na.rm=T),1)`), and in average, `r mean(MM_dem$sex_MM)`% of the participants identified as male, suggesting that the sample skews toward younger male participants (Table S3). Likewise only  `r mean(MM_dem$politics_MM)`% of the participants identified as conservatives. A majority of participants (`r 100-mean(MM_dem$know_MM)`%) did not personally know a COVID patient at the time the data was collected.
+
+##**1.2 Data Pre-processing**
+The Moral Machine (MM) data went through pre-screening during which we excluded a number of entries. The original data included 9951 records. First, out of the 9951 submissions, 290 opted out from sharing their data (~3%). Of the remaining 9661 submissions, we excluded duplicate records per user, keeping the earliest record per each user. This reduced the dataset to 9569 entries. At this point we had records from 128 countries, out of which 19 had more than 100 submissions. We included the 20th country which had 96 answers for all questions, and filtered out the remaining countries, which led to our final dataset containing 7599 participants.
+
+No pre-screening was applied on the Yougov data.
+
+``` {r demographic table 1, echo=FALSE}
+
+options(knitr.kable.NA = '-')
+options(OutDec="\xB7")
+
+kbl(
+  Yougov_dem,
+  format = "latex",
+  booktabs = T,
+  escape=T,
+  col.names = c("Country", "Male (%)", "Age (SD)", "Know COVID patient (%)", "Health", "Smoker (%)", "College (%)", "Conservatives (%)", "Religious (%)","White (%)"),
+  align=c("l", rep("c",9)),
+  caption = "Demographic description of the four national samples",
+  position = "H",
+  )%>%
+  kable_styling(full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, font_size=8, bold=TRUE)
+
+
+
+```
+
+``` {r demographic table 2, echo=FALSE}
+
+options(knitr.kable.NA = '-')
+
+options(OutDec="\xB7")
+
+kbl(
+  MM_dem,
+  format = "latex",
+  booktabs = T,
+  escape=T,
+  col.names = c("Country", "Male (%)", "Age (SD)", "Know COVID patient (%)", "Conservatives (%)", "N"),
+  caption = "Demographic description of the MM sample",
+  position = "H",
+  align=c("l",rep("c",5)),
+  centering=T
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)
+
+
+
+
+```
+
+``` {r demographic table 3, echo=FALSE}
+
+options(knitr.kable.NA = '-')
+options(OutDec="\xB7")
+
+
+kbl(
+  dem_diff,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", "t", "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", "t", "p"),
+  caption = "Differences between the demographic characteristics of the Yougov and MM samples",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Age" = 2, "Know COVID patient" = 2, "Male" = 2, "Politics"=2))
+
+```
+
+
+#**2 The pay metric**
+
+For exploratory purposes, we included a triage metric not usually discussed in official guidelines, the ability to pay for treatment. We do not consider that metric further in the main text or in this appendix. As shown in Table S4, it received by far the lowest usability ratings of all metrics, and was always rejected by a large majority of respondents.
+
+```{r pay, echo=FALSE}
+options(OutDec="\xB7")
+options(knitr.kable.NA = '-')
+
+
+mm_pay_t=summaryBy(Pay ~ country, data=Main_MM[Main_MM$question=="Allocations",], FUN=c(mean, sd), na.rm=T)
+Main_MM$accepted_pay=ifelse(Main_MM$Pay > Main_MM$First & Main_MM$Pay > Main_MM$Random, 1,0)
+mm_pay_a=summaryBy(accepted_pay ~ country, data=Main_MM[Main_MM$question=="Allocations",], FUN=function(x){mean(x, na.rm=T)*100})
+mm_pay_t=merge(mm_pay_t, mm_pay_a, by="country")
+
+yg_pay_t=summaryBy(Pay ~ country, data=Main_Yougov[Main_Yougov$question=="Allocations",], FUN=c(mean,sd), na.rm=T)
+Main_Yougov$accepted_pay=ifelse(Main_Yougov$Pay > Main_Yougov$First & Main_Yougov$Pay > Main_Yougov$Random, 1,0)
+yg_pay_a=summaryBy(accepted_pay ~ country, data=Main_Yougov[Main_Yougov$question=="Allocations",], FUN=function(x){mean(x, na.rm=T)*100})
+yg_pay_t=merge(yg_pay_t, yg_pay_a, by="country")
+yg_pay_t$country=recode(yg_pay_t$country,`Brazil`="BRA", `France`="FRA", `Japan`="JPN")
+
+pay_table=merge(mm_pay_t, yg_pay_t, by="country", all.x=T)
+pay_table$Pay.mean.x<-paste0(round(pay_table$Pay.mean.x,2), " (",round(pay_table$Pay.sd.x,2), ")"  )
+pay_table$Pay.mean.y<-paste0(round(pay_table$Pay.mean.y,2), " (",round(pay_table$Pay.sd.y,2), ")"  )
+pay_table<-pay_table[, c(-3,-6)]
+pay_table$Pay.mean.y=ifelse(pay_table$Pay.mean.y=="NA (NA)", "-", pay_table$Pay.mean.y)
+
+```
+
+
+``` {r pay table S4, echo=FALSE}
+
+options(knitr.kable.NA = '-')
+options(OutDec="\xB7")
+
+
+kbl(
+  pay_table,
+  digits=2,
+  format = "latex",
+  booktabs = T,
+  escape=T,
+  col.names = c("Country",  "Mean (SD)", "Accepted (%)", "Mean (SD)", "Accepted (%)"),
+  caption = "Averages and percent of people who accepted the Pay metric on each sample",
+  position = "H",
+  align=c(rep("l", 5))
+  )%>%
+  kable_styling(full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, font_size=8, bold=TRUE)%>%
+  add_header_above(c(" ", "MM"=2, "Yougov"=2))
+
+
+
+
+```
+
+
+\newpage
+#**3 Allocations**
+
+##**3.1 Description of measures and coding**
+At the very beginning of the survey, participants received the following description:
+
+*"The COVID-19 crisis has required patients in the most serious respiratory conditions to be put on a ventilator that mechanically pushes air into their lungs. This is usually done with a tube that is inserted into their body through the patient's mouth. While the patient is on a ventilator, they are almost always sedated and sometimes also have their muscles temporarily paralyzed to prevent discomfort and attempts to instinctively remove the ventilator tube. Patients who are in serious medical condition will quickly die if the ventilator is removed before the patient has recovered."*
+
+Then, participants were presented with a survey measuring their preferences on how to allocate the ventilators. Participants could answer all questions regarding allocation prerferences in a scale from 0 ("Should not be considered") to 100 ("Should be considered"). Before the metrics, participants received the following question:
+
+*"Many hospitals currently or soon will face situations where the demand for ventillators among needy patients will exceed the number of ventilators that are available. In that case, difficult decisions will need to be made about who should be placed on the scarce number of ventilators available. __How much of a role should each of these factors play in determining the priority that patients have for being allocated a ventillator?__"*
+
+Participants then rated the follwing metrics, in randomized order:
+
+* Random: "Ventillators should be allocated by random lottery (i.e. individual characteristics not considered)"
+* First: "When they arrived at the hospital (i.e. prioritize patients who were first in line)"
+* Prognosis: "The chance of recovery (i.e. prioritze patients without any medical conditions that worsen their progress)"
+* Age: "How many years of life they're likely to have after the illness (i.e. younger patients)"
+* Quality: "The likely physical quality of life after the illness (i.e. prioritize patients without any medical conditions that would reduce quality of life after COVID-19 resolves)"
+* Past: "Whether they've made sacrifices helping with the virus (e.g. medical professionals and research participants who've put their lifes at risk)"
+* Future: "Whether they might help with the virus in the future. (e.g. medical professionals & students, etc.)"
+* Pay: "Their ability to pay (prioritize patients who are insured/can afford treratment)"
+
+The questions regaridng allocation preferences were the same in the Yougov and MM surveys. After participants responded to allocation preferences, we recorded their preferences for re-allocation decisions (the order was always kept the same: first allocation, then re-allocation decisions). Before the actual re-allocation survey, participants received the following description:
+
+*"Many hospitals may have to decide whether to __withdraw__ a ventilator that is keeping one patient alive in order to give it to another patient. __How much of a role should each of these factors play in determining whether a ventilator should be moved from one patient to a new one?__"*
+
+Then participants received the same descriptions of each metrics except for the random metric that makes no sense in the re-allocation context (i.e. all ventilators are allocated already, there cannot be a random allocation). The survey ended with a set of demographic questions administered by Yougov (the exact set of demographic questions being different in different countries). In the moral machine version of the survey, the demographic questions included gender (Male/Female/other), age in years, and political ideology (on a continuous scale from Conservative to Progressive), in addition to the question: "Do you personally know someone who has been hospitalized for issues related to COVID-19? (Yes/No)"
+In the statistical analysis we coded these variables as follows: gender (-0.5 male, 0.5 female and others), know covid patient (-0.5 no, 0.5 yes), and reverse coding of political ideology to improve the readability of the results (but the scale from 0 to 100 remained). 
+
+In the Yougov survey, age, gender and knowing a COVID patient were measured in the same way (and were also coded in the same way in the statistical analysis as in the MM survey). For all countries, we recorded perceive health in a 5 point Likert scale from bad health (1) to very good health (5) and whether or not they smoke (coded as 0.5 if "Yes" and -0.5 if "No"). In France, political ideology was measured using an ordinal scale with the following options (in parenthesis how it was coded in the statistical analysis): "Very progressive" (0, "Tres a gauche"), "Progressive" (0.25, "a gauche"), "Neither progressive nor conservative" (0.5, "ni a gauche, ni a droite"), "Centrum" (0.5, "Au centre"), "Conservative" (0.75, "a droite"), "Very conservative" (1, "tres a droite"). In the US, similar options were used: "Very liberal" (0), "Liberal" (0.25), "Moderate" (0.5), "Conservative" (0.75), "Very conservative" (1). In France and in the US, participants indicated their highest level of education, whch was recoded a s being college educated or not (coded as 0.5 if yes, and -0.5 if no). In the US, participants indicated race/ethnicity (coded 0.5 if white, and -0.5 if minority) and religion (coded -0.5 for people who selected "Agnostic", "Atheist" or "nothing in particular", and 0.5 for people who selected a religion).
+
+##**3.2 Membership in the No Triage and Full Triage group**
+
+In the Yougov data, the two largest groups in all four countries are always participants who would prefer No Triage, followed by participants who would prefer Full Triage. As shown in Table S5, the third largest group is always significantly smaller than the No Triage and Full Triage groups. In the Moral Machine data, the two largest groups are also and always No Triage and Full Triage, but the top group within these two varies across countries. As shown in Table S6, the Moral Machine sample appears to be skewed in favor of the Full Triage group, when compared to the Yougov sample. In any case though, the Moral Machine results replicate the main result obtained in the Yougov sample: in 17 out of 20 countries, the third largest group is significantly smaller than both the No Triage and Full Triage groups (Table S7).
+
+```{r demography stats, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+options(OutDec="\xB7")
+
+
+
+#belonging to the full triage group
+##MM
+Main_MM$subset=factor(Main_MM$subset)
+Main_MM$full=ifelse(Main_MM$subset=="Full Triage", 1, 0)
+Main_MM$no=ifelse(Main_MM$subset=="No Triage", 1, 0)
+Main_MM$gender=ifelse(Main_MM$survey_demography_gender=="male", 0.5, -0.5)
+Main_MM$patient=ifelse(Main_MM$survey_knowPatient=="yes",0.5, -0.5)
+
+
+variables=c("full", "no", "Future", "Past", "Years", "Quality", "Prognosis", "First", "Random", "Pay")
+dat=data.frame(variable=c("Gender", "Know COVID Patient", "Age", "Politics"))
+
+count=2
+for (i in variables){
+  if (i=="full"|i=="no"){
+model<-glmer(Main_MM[Main_MM$question=="Allocations" & Main_MM$exclude==1, i] ~ gender + patient+ survey_demography_age + survey_demography_political + (1|country), data=Main_MM[Main_MM$question=="Allocations" & Main_MM$exclude==1, ], family="binomial", na.action=na.omit)
+
+      } else {
+model<-lmer(Main_MM[Main_MM$question=="Allocations", i] ~ gender + patient+ survey_demography_age + survey_demography_political + (1|country), data=Main_MM[Main_MM$question=="Allocations" , ], na.action=na.omit)
+
+      }
+
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat[,count]=f[2:5,c("estimate")]
+names(dat)[count] <- i
+count=count+1
+}
+
+
+
+#for Yougov all analysis separatly by country
+Main_Yougov$subset=factor(Main_Yougov$subset)
+Main_Yougov$full=ifelse(Main_Yougov$subset=="Full Triage", 1, 0)
+Main_Yougov$no=ifelse(Main_Yougov$subset=="No Triage", 1, 0)
+Main_Yougov$gender=ifelse(Main_Yougov$sex=="Male", 0.5, -0.5)
+Main_Yougov$patient=ifelse(Main_Yougov$knows.covid=="Yes",0.5, -0.5)
+Main_Yougov$smoker=ifelse(Main_Yougov$smoke=="Yes",0.5, -0.5)
+
+
+variables=c("full", "no", "Future", "Past", "Years", "Quality", "Prognosis", "First", "Random", "Pay")
+dat_bra=data.frame(country=rep("Brazil", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health"))
+
+count=3
+for (i in variables){
+  if (i=="full"|i=="no"){
+    family="binomial"
+  } else {
+    family="gaussian"
+  }
+
+model<-glm(Main_Yougov[Main_Yougov$question=="Allocations"& Main_Yougov$country=="Brazil", i] ~ gender + patient+ age + smoker + health, data=Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country=="Brazil" , ], family=family,na.action=na.omit)
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_bra[,count]=f[2:6,c("estimate")]
+names(dat_bra)[count] <- i
+count=count+1
+}
+
+dat_jap=data.frame(country=rep("Japan", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health"))
+
+count=3
+for (i in variables){
+  if (i=="full"|i=="no"){
+    family="binomial"
+  } else {
+    family="gaussian"
+  }
+
+model<-glm(Main_Yougov[Main_Yougov$question=="Allocations"& Main_Yougov$country=="Japan", i] ~ gender + patient+ age + smoker + health, data=Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country=="Japan" , ], family=family,na.action=na.omit)
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_jap[,count]=f[2:6,c("estimate")]
+names(dat_jap)[count] <- i
+count=count+1
+}
+
+France_Yougov$education=ifelse(France_Yougov$education==1, 0.5, -0.5)
+France_Yougov$id=France_Yougov$caseid
+france=subset(France_Yougov, select=c("id", "political", "education"))
+
+france=merge(Main_Yougov,france, by="id")
+dat_fra=data.frame(country=rep("France", 7), var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education"))
+
+count=3
+for (i in variables){
+  if (i=="full"|i=="no"){
+    family="binomial"
+  } else {
+    family="gaussian"
+  }
+
+model<-glm(france[france$question=="Allocations", i] ~ gender + patient+ age + smoker + health + political + education, data=france[france$question=="Allocations", ], family=family,na.action=na.omit)
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_fra[,count]=f[2:8,c("estimate")]
+names(dat_fra)[count] <- i
+count=count+1
+}
+
+Us_Yougov$subset=factor(Us_Yougov$subset)
+Us_Yougov$full=ifelse(Us_Yougov$subset=="Full Triage", 1, 0)
+Us_Yougov$no=ifelse(Us_Yougov$subset=="No Triage", 1, 0)
+Us_Yougov$gender=ifelse(Us_Yougov$gender=="Male", 0.5, -0.5)
+Us_Yougov$patient=ifelse(Us_Yougov$knows.covid=="Yes",0.5, -0.5)
+Us_Yougov$smoker=ifelse(Us_Yougov$smoke=="Yes",0.5, -0.5)
+Us_Yougov$education=ifelse(Us_Yougov$education==1, 0.5, -0.5)
+Us_Yougov$race_re=ifelse(Us_Yougov$race_re==1, 0.5, -0.5)
+Us_Yougov$religious=ifelse(Us_Yougov$religious==1, 0.5, -0.5)
+Us_Yougov$health2=ifelse(Us_Yougov$health=="Poor",1, ifelse(Us_Yougov$health=="Fair",2,ifelse(Us_Yougov$health=="Good",3,
+                                                                                               ifelse(Us_Yougov$health=="Very good",4,
+                                                                                                      ifelse(Us_Yougov$health=="Excellent",5, NA)))))
+
+dat_usa=data.frame(country=rep("US",9),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education", "Ethnicity", "Religiousity"))
+
+count=3
+for (i in variables){
+  if (i=="full"|i=="no"){
+    family="binomial"
+  } else {
+    family="gaussian"
+  }
+
+model<-glm(Us_Yougov[Us_Yougov$question=="Allocations", i] ~ gender + patient+ age + smoker + health2 + political + education + race_re +religious, data=Us_Yougov[Us_Yougov$question=="Allocations", ], family=family,na.action=na.omit)
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_usa[,count]=f[2:10,c("estimate")]
+names(dat_usa)[count] <- i
+count=count+1
+}
+
+dat_jap=melt(dat_jap, id.vars=c("country", "var"))
+dat_jap=dcast(dat_jap, country+var ~ variable)
+dat_fra=melt(dat_fra, id.vars=c("country", "var"))
+dat_fra=dcast(dat_fra, country+var ~ variable)
+dat_bra=melt(dat_bra, id.vars=c("country", "var"))
+dat_bra=dcast(dat_bra, country+var ~ variable)
+dat_usa=melt(dat_usa, id.vars=c("country", "var"))
+dat_usa=dcast(dat_usa, country+var ~ variable)
+
+full_yg=rbind(dat_bra, dat_fra, dat_jap, dat_usa)
+
+```
+
+```{r main result stat Yougov, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+#options(OutDec="\xB7")
+
+
+####statistical assasment of the main results
+#everything by country
+#first MM
+##statistical significant difference between no triage and full triage groups
+Main_Yougov$triage=ifelse(Main_Yougov$subset=="Full Triage",1, ifelse(Main_Yougov$subset=="No Triage", 0, NA))
+country_difference=data.frame(country=levels(Main_Yougov$country), chi_full_no=rep(0,4), p_full_no=rep(0,4), chi_no_third=rep(0,4), p_no_third=rep(0,4), chi_full_third=rep(0,4), p_full_third=rep(0,4), row.names=levels(Main_Yougov$country))
+
+#define the 3rd largest group for every country
+#the measure that people accept the most, eg. included in the list
+#for every country, count the number of times each measure is included in the list, then select the name of the highest count
+#count "Prognosis"
+
+no_vs_third = Main_Yougov %>%
+  filter(question=="Allocations") %>%
+  group_by(country, features) %>%
+  summarize(N = n())%>%
+  mutate(Sum=sum(N)) %>%
+  arrange(country, desc(N)) %>%
+  slice_head(n=3) %>%
+  arrange(country, features)%>%
+  slice(c(1,n()))%>%
+  subset(select=c(N, country))%>%
+  ungroup()
+
+full_vs_third = Main_Yougov %>%
+  filter(question=="Allocations") %>%
+  group_by(country, features) %>%
+  summarize(N = n())%>%
+  mutate(Sum=sum(N)) %>%
+  arrange(country, desc(N)) %>%
+  slice_head(n=3) %>%
+  arrange(country, features)%>%
+  slice_tail(n=2)%>%
+  subset(select=c(N, country))%>%
+  ungroup()
+
+#number of full vs no
+#by country
+count=1
+for (i in levels(Main_Yougov$country)){
+  res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$triage))
+  country_difference$chi_full_no[count]=round(unname(res$statistic),2)
+  country_difference$p_full_no[count]=round(unname(res$p.value),3)
+  
+  res=chisq.test(as.table(t(no_vs_third[no_vs_third$country==i, 1])))
+  country_difference$chi_no_third[count]=round(unname(res$statistic),2)
+  country_difference$p_no_third[count]=round(unname(res$p.value),3)
+  
+  res=chisq.test(as.table(t(full_vs_third[full_vs_third$country==i, 1])))
+  country_difference$chi_full_third[count]=round(unname(res$statistic),2)
+  country_difference$p_full_third[count]=round(unname(res$p.value),3)
+  count=count+1
+}
+
+
+
+
+
+for (i in colnames(country_difference)){
+  country_difference[, i] <-mypvalue(country_difference[,i])
+}
+country_difference_YG=country_difference
+
+
+#rejector, computing for each scale
+Main_Yougov$higher=ifelse(Main_Yougov$Random > Main_Yougov$First, Main_Yougov$Random, Main_Yougov$First)
+
+Main_Yougov$rfuture=ifelse(Main_Yougov$Future <= Main_Yougov$higher, 1,0)
+Main_Yougov$rpast=ifelse(Main_Yougov$Past <= Main_Yougov$higher, 1,0)
+Main_Yougov$ryears=ifelse(Main_Yougov$Years <= Main_Yougov$higher, 1,0)
+Main_Yougov$rquality=ifelse(Main_Yougov$Quality <= Main_Yougov$higher, 1,0)
+Main_Yougov$rprognosis=ifelse(Main_Yougov$Prognosis<= Main_Yougov$higher, 1,0)
+Main_Yougov$rpay=ifelse(Main_Yougov$Pay <= Main_Yougov$higher, 1,0)
+
+
+rejector_results=data.frame(country=levels(Main_Yougov$country), chi_rfuture=rep(0,4), p_rfuture=rep(0,4),chi_rpast=rep(0,4),  p_rpast=rep(0,4), chi_ryears=rep(0,4),  p_ryears=rep(0,4),chi_rquality=rep(0,4),  p_rquality=rep(0,4),chi_rprognosis=rep(0,4),  p_rprognosis=rep(0,4),chi_rpay=rep(0,4),  p_rpay=rep(0,4), row.names=levels(Main_Yougov$country))
+
+count=1
+for (i in levels(Main_Yougov$country)){
+  res = chisq.test(table(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rfuture))
+  rejector_results$chi_rfuture[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rfuture[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rfuture,na.rm=T)*100,1)
+
+  res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rpast))
+  rejector_results$chi_rpast[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rpast[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rpast,na.rm=T)*100,1)
+
+      res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$ryears))
+  rejector_results$chi_ryears[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_ryears[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$ryears,na.rm=T)*100,1)
+
+      res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rquality))
+  rejector_results$chi_rquality[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rquality[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rquality,na.rm=T)*100,1)
+
+        res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rprognosis))
+  rejector_results$chi_rprognosis[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rprognosis[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rprognosis,na.rm=T)*100,1)
+
+          res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rpay))
+  rejector_results$chi_rpay[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rpay[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i, ]$rpay,na.rm=T)*100,1)
+
+  count=count+1
+}
+
+#for (i in colnames(rejector_results)){
+#  rejector_results[, i] <-mypvalue(rejector_results[,i])
+#}
+
+rejector_results_YG=rejector_results
+##those who rejected, do they have a bigger value than 50?
+
+rejector_rate=data.frame(country=levels(Main_Yougov$country), t_rfuture=rep(0,4), p_rfuture=rep(0,4),t_rpast=rep(0,4),  p_rpast=rep(0,4), t_ryears=rep(0,4),  p_ryears=rep(0,4),t_rquality=rep(0,4),  p_rquality=rep(0,4),t_rprognosis=rep(0,4),  p_rprognosis=rep(0,4), t_rpay=rep(0,4),  p_rpay=rep(0,4), row.names=levels(Main_Yougov$country))
+
+
+count=1
+for (i in levels(Main_Yougov$country)){
+    res= t.test(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i & Main_Yougov$rfuture==1, ]$Future, mu=50, alternative="two.sided")
+  rejector_rate$t_rfuture[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rfuture[count]=round(unname(res$p.value),3)
+    res= t.test(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i & Main_Yougov$rpast==1, ]$Past, mu=50, alternative="two.sided")
+  rejector_rate$t_rpast[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rpast[count]=round(unname(res$p.value),3)
+    res= t.test(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i & Main_Yougov$ryears==1, ]$Years, mu=50, alternative="two.sided")
+  rejector_rate$t_ryears[count]=round(unname(res$statistic),2)
+  rejector_rate$p_ryears[count]=round(unname(res$p.value),3)
+    res= t.test(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i & Main_Yougov$rquality==1, ]$Quality, mu=50, alternative="two.sided")
+  rejector_rate$t_rquality[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rquality[count]=round(unname(res$p.value),3)
+      res= t.test(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i & Main_Yougov$rprognosis==1, ]$Prognosis, mu=50, alternative="two.sided")
+  rejector_rate$t_rprognosis[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rprognosis[count]=round(unname(res$p.value),3)
+        res= t.test(Main_Yougov[Main_Yougov$question=="Allocations" & Main_Yougov$country==i & Main_Yougov$rpay==1, ]$Pay, mu=50, alternative="two.sided")
+  rejector_rate$t_rpay[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rpay[count]=round(unname(res$p.value),3)
+  count=count+1
+}
+
+
+for (i in colnames(rejector_rate)){
+  rejector_rate[, i] <-mypvalue(rejector_rate[,i])
+}
+rejector_rate_YG=rejector_rate
+```
+
+``` {r main result tables Yougov T8 S5, echo=FALSE}
+
+options(knitr.kable.NA = '-')
+options(OutDec="\xB7")
+
+kbl(
+  country_difference_YG,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
+  caption = "Differences among triage preferences on the Yougov data",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Full vs. No" = 2, "No vs. Third" = 2, "Full vs Third" = 2))
+
+
+```
+
+```{r main result stat MM, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+options(OutDec="\xB7")
+
+####statistical assasment of the main results
+#everything by country
+#first MM
+##statistical significant difference between no triage and full triage groups
+
+Main_MM$triage=ifelse(Main_MM$subset=="Full Triage",1, ifelse(Main_MM$subset=="No Triage", 0, NA))
+country_difference=data.frame(country=levels(Main_MM$country), chi_full_no=rep(0,20), p_full_no=rep(0,20), chi_no_third=rep(0,20), p_no_third=rep(0,20), chi_full_third=rep(0,20), p_full_third=rep(0,20), row.names=levels(Main_MM$country))
+
+#define the 3rd largest group for every country
+#the measure that people accept the most, eg. included in the list
+#for every country, count the number of times each measure is included in the list, then select the name of the highest count
+#count "Prognosis"
+
+no_vs_third = Main_MM %>%
+  filter(question=="Allocations" & exclude==1) %>%
+  group_by(country, features) %>%
+  summarize(N = n())%>%
+  mutate(Sum=sum(N)) %>%
+  arrange(country, desc(N)) %>%
+  slice_head(n=3) %>%
+  arrange(country, features)%>%
+  slice(c(1,n()))%>%
+  subset(select=c(N, country))%>%
+  ungroup()
+
+full_vs_third = Main_MM %>%
+  filter(question=="Allocations" & exclude==1) %>%
+  group_by(country, features) %>%
+  summarize(N = n())%>%
+  mutate(Sum=sum(N)) %>%
+  arrange(country, desc(N)) %>%
+  slice_head(n=3) %>%
+  arrange(country, features)%>%
+  slice_tail(n=2)%>%
+  subset(select=c(N, country))%>%
+  ungroup()
+
+#number of full vs no
+#by country
+count=1
+for (i in levels(Main_MM$country)){
+  res= chisq.test(table(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i & Main_MM$exclude==1, ]$triage))
+  country_difference$chi_full_no[count]=round(unname(res$statistic),2)
+  country_difference$p_full_no[count]=round(unname(res$p.value),3)
+  
+  res=chisq.test(as.table(t(no_vs_third[no_vs_third$country==i, 1])))
+  country_difference$chi_no_third[count]=round(unname(res$statistic),2)
+  country_difference$p_no_third[count]=round(unname(res$p.value),3)
+  
+  res=chisq.test(as.table(t(full_vs_third[full_vs_third$country==i, 1])))
+  country_difference$chi_full_third[count]=round(unname(res$statistic),2)
+  country_difference$p_full_third[count]=round(unname(res$p.value),3)
+  
+  count=count+1
+}
+
+
+for (i in colnames(country_difference)){
+  country_difference[, i] <-mypvalue(country_difference[,i])
+}
+country_difference_MM=country_difference
+
+
+#rejector, computing for each scale
+
+Main_MM$higher=ifelse(Main_MM$Random > Main_MM$First, Main_MM$Random, Main_MM$First)
+
+Main_MM$rfuture=ifelse(Main_MM$Future <= Main_MM$higher, 1,0)
+Main_MM$rpast=ifelse(Main_MM$Past <= Main_MM$higher, 1,0)
+Main_MM$ryears=ifelse(Main_MM$Years <= Main_MM$higher, 1,0)
+Main_MM$rquality=ifelse(Main_MM$Quality <= Main_MM$higher, 1,0)
+Main_MM$rprognosis=ifelse(Main_MM$Prognosis<= Main_MM$higher, 1,0)
+Main_MM$rpay=ifelse(Main_MM$Pay <= Main_MM$higher, 1,0)
+
+
+
+rejector_results=data.frame(country=levels(Main_MM$country), chi_rfuture=rep(0,20), p_rfuture=rep(0,20),chi_rpast=rep(0,20),  p_rpast=rep(0,20), chi_ryears=rep(0,20),  p_ryears=rep(0,20),chi_rquality=rep(0,20),  p_rquality=rep(0,20),chi_rprognosis=rep(0,20),  p_rprognosis=rep(0,20),chi_rpay=rep(0,20),  p_rpay=rep(0,20), row.names=levels(Main_MM$country))
+
+count=1
+for (i in levels(Main_MM$country)){
+  res = chisq.test(table(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rfuture))
+  rejector_results$chi_rfuture[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rfuture[count]=50-round(mean(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rfuture,na.rm=T)*100,1)
+
+  res= chisq.test(table(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rpast))
+  rejector_results$chi_rpast[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rpast[count]=50-round(mean(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rpast,na.rm=T)*100,1)
+
+      res= chisq.test(table(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$ryears))
+  rejector_results$chi_ryears[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_ryears[count]=50-round(mean(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$ryears,na.rm=T)*100,1)
+
+      res= chisq.test(table(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rquality))
+  rejector_results$chi_rquality[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rquality[count]=50-round(mean(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rquality,na.rm=T)*100,1)
+
+        res= chisq.test(table(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rprognosis))
+  rejector_results$chi_rprognosis[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rprognosis[count]=50-round(mean(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rprognosis,na.rm=T)*100,1)
+
+          res= chisq.test(table(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rpay))
+  rejector_results$chi_rpay[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rpay[count]=50-round(mean(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i, ]$rpay,na.rm=T)*100,1)
+
+  count=count+1
+}
+
+#for (i in colnames(rejector_results)){
+#  rejector_results[, i] <-mypvalue(rejector_results[,i])
+#}
+rejector_results_MM=rejector_results
+
+##those who rejected, do they have a bigger value than 50?
+
+rejector_rate=data.frame(country=levels(Main_MM$country), t_rfuture=rep(0,20), p_rfuture=rep(0,20),t_rpast=rep(0,20),  p_rpast=rep(0,20), t_ryears=rep(0,20),  p_ryears=rep(0,20),t_rquality=rep(0,20),  p_rquality=rep(0,20),t_rprognosis=rep(0,20),  p_rprognosis=rep(0,20),t_rpay=rep(0,20),  p_rpay=rep(0,20),row.names=levels(Main_MM$country))
+
+
+count=1
+for (i in levels(Main_MM$country)){
+    res= t.test(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i & Main_MM$rfuture==1, ]$Future, mu=50, alternative="two.sided")
+  rejector_rate$t_rfuture[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rfuture[count]=round(unname(res$p.value),3)
+    res= t.test(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i & Main_MM$rpast==1, ]$Past, mu=50, alternative="two.sided")
+  rejector_rate$t_rpast[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rpast[count]=round(unname(res$p.value),3)
+    res= t.test(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i & Main_MM$ryears==1, ]$Years, mu=50, alternative="two.sided")
+  rejector_rate$t_ryears[count]=round(unname(res$statistic),2)
+  rejector_rate$p_ryears[count]=round(unname(res$p.value),3)
+    res= t.test(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i & Main_MM$rquality==1, ]$Quality, mu=50, alternative="two.sided")
+  rejector_rate$t_rquality[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rquality[count]=round(unname(res$p.value),3)
+    res= t.test(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i & Main_MM$rprognosis==1, ]$Prognosis, mu=50, alternative="two.sided")
+  rejector_rate$t_rprognosis[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rprognosis[count]=round(unname(res$p.value),3)
+      res= t.test(Main_MM[Main_MM$question=="Allocations" & Main_MM$country==i & Main_MM$rprognosis==1, ]$Pay, mu=50, alternative="two.sided")
+  rejector_rate$t_rpay[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rpay[count]=round(unname(res$p.value),3)
+
+  count=count+1
+}
+
+
+for (i in colnames(rejector_rate)){
+  rejector_rate[, i] <-mypvalue(rejector_rate[,i])
+}
+
+rejector_rate_MM=rejector_rate
+
+
+```
+
+``` {r Yougov vs MM, echo=FALSE}
+options(OutDec="\xB7")
+
+Main_Yougov$country=factor(Main_Yougov$country, levels=c("Brazil", "France", "Japan", "USA"), labels=c("BRA", "FRA", "JPN", "USA"))
+Main_Yougov$sample=1
+Main_MM$sample=2
+##select country, Future, Past, years, Quality, Prognosis, First, Pay, Random, subset, sample then rbind
+yg_rbind=subset(Main_Yougov,question=="Allocations", select=c(country, Future, Past, Years, Quality, Prognosis, First, Random, Pay, no, full, sample))
+mm_rbind=subset(Main_MM,question=="Allocations" & (country=="JPN"|country=="BRA"|country=="FRA"|country=="USA"), select=c(country, Future, Past, Years, Quality, Prognosis, First,  Random, Pay, no, full, sample))
+
+compare=rbind(yg_rbind,mm_rbind)
+compare$sample=factor(compare$sample, levels=c(1:2), labels=c("Yougov", "MM"))
+compare$country=factor(compare$country)
+#########comparing all for every country with a t-test.
+scale_diff=data.frame(country=levels(compare$country), t_fut=rep(0,4), p_fut=rep(0,4),t_pas=rep(0,4), p_pas=rep(0,4), t_year=rep(0,4), p_year=rep(0,4), t_qual=rep(0,4), p_qual=rep(0,4),t_prog=rep(0,4), p_prog=rep(0,4),t_firs=rep(0,4), p_firs=rep(0,4),t_rando=rep(0,4), p_rando=rep(0,4),  t_pay=rep(0,4), p_pay=rep(0,4), row.names=levels(compare$country))
+scale_diff2=data.frame(country=levels(compare$country), chi_full=rep(0,4), diff_full=rep(0,4), chi_no=rep(0,4), diff_no=rep(0,4), row.names=levels(compare$country))
+
+#triage_diff=data.frame(country=levels(compare$country), chi_full=rep(0,4), p_full=rep(0,4),  row.names=levels(compare$country))
+
+##t test for all the continuous, chi_square for triage 
+count=1
+for (i in levels(compare$country)) {
+  res=t.test(Future ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_fut[count]=round(unname(res$statistic),2)
+  scale_diff$p_fut[count]=round(unname(res$p.value),3)
+  res=t.test(Past ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_pas[count]=round(unname(res$statistic),2)
+  scale_diff$p_pas[count]=round(unname(res$p.value),3)
+    res=t.test(Years ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_year[count]=round(unname(res$statistic),2)
+  scale_diff$p_year[count]=round(unname(res$p.value),3)
+    res=t.test(Quality ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_qual[count]=round(unname(res$statistic),2)
+  scale_diff$p_qual[count]=round(unname(res$p.value),3)
+    res=t.test(Prognosis ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_prog[count]=round(unname(res$statistic),2)
+  scale_diff$p_prog[count]=round(unname(res$p.value),3)
+    res=t.test(First ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_firs[count]=round(unname(res$statistic),2)
+  scale_diff$p_firs[count]=round(unname(res$p.value),3)
+    res=t.test(Random ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_rando[count]=round(unname(res$statistic),2)
+  scale_diff$p_rando[count]=round(unname(res$p.value),3)
+      res=t.test(Pay ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_pay[count]=round(unname(res$statistic),2)
+  scale_diff$p_pay[count]=round(unname(res$p.value),3)
+  count=count+1
+}
+
+count=1
+for (i in levels(compare$country)) {
+  res= chisq.test(table(compare[compare$country==i, ]$full, compare[compare$country==i, ]$sample))
+  scale_diff2$chi_full[count]=format(res$statistic,digits=2, nsmall=2)
+  scale_diff2$chi_full[count]=apply_if(scale_diff2$chi_full[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  scale_diff2$chi_full[count]=apply_if(scale_diff2$chi_full[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  scale_diff2$chi_full[count]=apply_if(scale_diff2$chi_full[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  scale_diff2$diff_full[count]=round(mean(compare[compare$country==i & compare$sample=="Yougov",]$full, na.rm=T) - mean(compare[compare$country==i & compare$sample=="MM",]$full, na.rm=T),4)*100
+    res= chisq.test(table(compare[compare$country==i, ]$no, compare[compare$country==i, ]$sample))
+  scale_diff2$chi_no[count]=format(res$statistic,digits=2, nsmall=2)
+  scale_diff2$chi_no[count]=apply_if(scale_diff2$chi_no[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  scale_diff2$chi_no[count]=apply_if(scale_diff2$chi_no[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  scale_diff2$chi_no[count]=apply_if(scale_diff2$chi_no[count], res$p.value<0.001, function(x) paste0(x, "*") )
+    scale_diff2$diff_no[count]=round(mean(compare[compare$country==i & compare$sample=="Yougov",]$no, na.rm=T) - mean(compare[compare$country==i & compare$sample=="MM",]$no, na.rm=T),4)*100
+
+  count=count+1
+}
+
+for (i in colnames(scale_diff)){
+  scale_diff[, i] <-mypvalue(scale_diff[,i])
+}
+
+for (i in colnames(scale_diff2)){
+  scale_diff2[, i] <-mypvalue(scale_diff2[,i])
+}
+
+```
+
+```{r coherence table T14 S6, echo=FALSE}
+options(OutDec="\xB7")
+
+
+kbl(
+  scale_diff2,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "Difference", '$\\chi^2$ (1)', "Difference"),
+  align = c(rep("l",5)),
+  caption = "Differences between MM and Yougov samples on Full and No triage responses",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Full" = 2, "No" = 2))%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001.", notation="none")
+
+```
+
+``` {r main result MM tables T11 S7, echo=FALSE}
+options(OutDec="\xB7")
+
+kbl(
+  country_difference_MM,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
+  caption = "Differences among triage preferences on the MM data",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Full vs. No" = 2, "No vs. Third" = 2, "Full vs Third" = 2))
+
+
+```
+
+For descriptive purposes, Table S8 displays the demographic profile of participants in the Full Triage and No Triage groups in the Yougov samples, and Table S9 displays the same information for the Moral Machine samples. There is no consistent pattern in these demographic profiles across countries. For example, a conservative ideology is significantly associated with a preference for No Triage in the USA, but the effect goes in the opposite direction in France. Likewise, the Moral Machine data shows an overall trend for men to accept Full Triage more than women do, but there is considerable variation across countries for this association (e.g., it goes in the opposite direction for France and Japan in the Yougov samples). Tables S10 and S11 show the results of logistic regressions testing these associations; for the Moral Machine data, we used mixed effect models with country as a random intercept. Note that in the Moral Machine data, some participants skipped some questions. As a result, they were excluded from all analyses that involved a comparison between the No Triage and Full Triage group (`r 100-round(mean(Main_MM[Main_MM$question=="Allocations",]$exclude,na.rm=T),3)*100`% was excluded).
+
+``` {r demographic table 4 S8, echo=FALSE}
+
+options(knitr.kable.NA = '-')
+options(OutDec="\xB7")
+
+
+rownames(yg_comp)<-NULL
+kbl(
+  yg_comp,
+  format = "latex",
+  booktabs = T,
+  escape=T,
+  col.names = c("Country", "Average of...", "in the Full Triage group", "in the No Triage group"),
+  caption = "Demographic profiles of Full triage and No triage respondents by country on the Yougov sample",
+  position = "h",
+  align=c(rep("l", 4)),
+  )%>%
+  kable_styling(full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, font_size=8, bold=TRUE)%>%
+  collapse_rows(columns = 1, valign = "top", latex_hline = "major", row_group_label_position = "identity")
+
+
+
+```
+
+``` {r demographic table 5 S9, echo=FALSE}
+
+options(knitr.kable.NA = '-')
+options(OutDec="\xB7")
+
+
+kbl(
+  mm_t2,
+  format = "latex",
+  booktabs = T,
+  escape=T,
+  col.names = c("Country",  "Full Triage", "No Triage","Full Triage", "No Triage","Full Triage", "No Triage","Full Triage", "No Triage"),
+  caption = "Demographic profiles of Full triage and No triage respondents by country on the MM sample",
+  position = "H",
+  align=c(rep("l", 9))
+  )%>%
+  kable_styling(full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, font_size=8, bold=TRUE)%>%
+  add_header_above(c(" ", "Age" = 2, "Gender (% of men)" = 2, "Know COVID patient" = 2, "Conservatives" = 2))
+
+
+
+
+```
+
+
+```{r demography results tables YG T6 S10, echo=FALSE}
+options(OutDec="\xB7")
+
+
+kbl(
+  full_yg,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", "Variable", 'Full Triage', "No Triage", "Future", "Past", "Age", "Quality", "Prognosis", "First", "Random", "Pay"),
+  caption = "Effect of demographic variables on the Yougov data",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8,  position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  collapse_rows(columns = 1, valign = "top", latex_hline = "major", row_group_label_position = "identity")%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001. Results are unstandardised beta weights", notation="none")
+
+
+```
+
+```{r dem results tables MM T7 S11, echo=FALSE}
+options(OutDec="\xB7")
+
+kbl(
+  dat,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Variable", 'Full Triage', "No Triage", "Future", "Past", "Age", "Quality", "Prognosis", "First", "Random", "Pay"),
+  caption = "Effect of demographic variables on the MM data",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001. Results are unstandardised beta weights.", notation="none")
+
+```
+
+\newpage
+ 
+##**3.3 Ratings of triage metrics** 
+
+To test the reconciliation potential of each metric, we first consider whether a majority of participants rejects this metric, in the sense that it is rated lower than either the random lottery or the first-come-first served mechanisms. Table S12 summarizes the results of this test in the four countries included in the Yougov data, and shows that not a single metric is accepted by a significant majority in any country. On the contrary, all metrics are rejected by a significant majority of participants in Brazil and the USA. Only the Prognosis metric shows some potential, since it is accepted by a (non-significant) majority of participants in France and Japan. Table S13 summarizes the results obtained with the Moral Machine data. These results suggest that the Prognosis metric may indeed be the one with the greatest reconciliation potential, since it is accepted by a majority of participants in 17 countries out of 20. However, this majority is only significant in 5 countries. Likewise, the Age metric is accepted by a majority of participants in 14 countries, but this majority is only significant in one country. We must be careful when interpreting the results, since Table S14 shows that the Moral Machine sample was significantly skewed in favor of these two metrics, compared to the Yougov sample.
+
+``` {r main result tables Yougov T9 S12, echo=FALSE}
+
+options(knitr.kable.NA = '-')
+options(OutDec="\xB7")
+
+
+kbl(
+  rejector_results_YG,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
+  caption = "Does the number of participants who rejects a metrics differ from $50\\%$ on the Yougov data?",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Future" = 2, "Past" = 2, "Age" = 2, "Quality" = 2, "Prognosis"=2, "Pay"=2))%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001", notation="none")
+
+```
+
+
+``` {r main result MM tables T12 S13, echo=FALSE}
+options(OutDec="\xB7")
+
+kbl(
+  rejector_results_MM,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
+  caption = "Does the number of participants who rejects a metrics differ from $50\\%$ on the MM data?",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Future" = 2, "Past" = 2, "Age" = 2, "Quality" = 2, "Prognosis"=2, "Pay"=2))%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001", notation="none")
+
+```
+
+
+```{r coherence table T15 S14, echo=FALSE}
+options(OutDec="\xB7")
+
+kbl(
+  scale_diff,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", 't', "p", 't', "p", 't', "p",'t', "p",'t', "p",'t', "p", 't', "p",'t', "p"),
+  align = c("l", "c", "c", "c", "c","c", "c","c", "c"," c", "c","c", "c", "c","c" ),
+  caption = "Differences between MM and Yougov samples on each metric",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size =8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Future" = 2, "Past" = 2, "Age" = 2, "Quality"=2, "Prognosis" = 2, "First" = 2, "Random"= 2, "Pay"=2))
+
+```
+
+
+To further test the reconciliation potential of each metric, we consider its raw usability rating, and test whether this rating is significantly below the midpoint of the usability scale (i.e, 50). Table S15 summarizes the results of this test in the four countries included in the Yougov data. The metric with the best potential is Prognosis, with only one country (France) rating its usability significantly below 50, and two countries (Brazil and Japan) rating its usability significantly above 50.Table S16 summarizes the results obtained with the Moral Machine data. Here again, Prognosis shows the best potential: no country rates its usability significantly below 50. On the contrary, it is rated above 50 in 17 countries out of 20, although the comparison is significant only in 5. The Age metric comes second again. Only two countries rate its usability significantly below 50 (China and Germany). Usability is above 50 for 14 countries, but the comparison is significant only in one country.
+
+``` {r main result tables Yougov 10 S15, echo=FALSE}
+
+options(knitr.kable.NA = '-')
+
+options(OutDec="\xB7")
+
+
+kbl(
+  rejector_rate_YG,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", 't', "p", 't', "p", 't', "p",'t', "p",'t', "p",'t', "p"),
+  caption = "Does the rate of people who rejected a given metric differ from the mid-point of the scale (50) on the Yougov data?",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Future" = 2, "Past" = 2, "Age" = 2, "Quality" = 2, "Prognosis"=2, "Pay"=2))
+
+```
+
+``` {r main result MM tables T13 S16, echo=FALSE}
+
+options(OutDec="\xB7")
+
+
+kbl(
+  rejector_rate_MM,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", "t", "p", "t", "p", "t", "p","t", "p","t", "p","t", "p"),
+  caption = "Does the rate of people who rejected a given metric differ from the mid-point of the scale (50) on the MM data?",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Future" = 2, "Past" = 2, "Age" = 2, "Quality" = 2, "Prognosis"=2, "Pay"=2))
+```
+
+Table S10 and S11 displays the effect of demographic variables on the usability ratings of all metrics and mechanisms. As it was the case for membership in the No Triage or Full Triage groups, there is no consistent pattern of demographic effects across countries. This suggests that the demographic breakdown of public opinion in these matters is different in different countries or cultures. For example, the Prognosis metric is favored by progressives in the USA, but by conservatives in France. We would be hard-pressed to find demographic effects that generalize across countries, but some may be better candidates than others: for example, the preference of women for prioritizing healthcare workers (both for their past and future contributions), or the preference of younger, healthy participants for de-prioritizing older patients.
+
+
+
+\newpage
+
+#**4 Reallocations**
+
+
+As shown in Table S17 and S18, the usability rating of triage metrics is consistently lower for re-allocation decisions, as compared to allocations decisions. In parallel, the rating of the first-come-first-served mechanism is consistently higher. These two effects impact the relative sizes of the No Triage and Full Triage groups, but the results obtained for re-allocations are by and large the same as that obtained for allocations.
+
+
+```{r reallocation vs allocations stat, echo=FALSE}
+options(OutDec="\xB7")
+
+###glmer model for full and no triage random intercept ID
+##lme model for each measure separately
+##first Yougov
+##allocation vs reallocation regarding all Metrics + no, full. Saving in a table
+#for Yougov all analysis separatly by country
+Main_Yougov$question=factor(Main_Yougov$question)
+Main_Yougov$id=factor(Main_Yougov$id)
+variables=c("full", "no", "Future", "Past", "Years", "Quality", "Prognosis", "First",  "Pay")
+dat_bra=data.frame(country="Brazil")
+dat_jap=data.frame(country="Japan")
+dat_fra=data.frame(country="France")
+dat_usa=data.frame(country="USA")
+
+
+count=2
+for (i in variables){
+  if (i=="full"|i=="no"){
+    
+model<-glmer(Main_Yougov[ Main_Yougov$country=="BRA", i] ~ question + (1|id), data=Main_Yougov[Main_Yougov$country=="BRA" , ], family="binomial",na.action=na.omit)
+
+  } else {
+    
+model<-lmer(Main_Yougov[ Main_Yougov$country=="BRA", i] ~ question + (1|id), data=Main_Yougov[Main_Yougov$country=="BRA" , ], na.action=na.omit)
+  }
+
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2),digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_bra[,count]=f[2,c("estimate")]
+names(dat_bra)[count] <- i
+
+  if (i=="full"|i=="no"){
+    
+model<-glmer(Main_Yougov[ Main_Yougov$country=="JPN", i] ~ question + (1|id), data=Main_Yougov[Main_Yougov$country=="JPN" , ], family="binomial",na.action=na.omit)
+
+  } else {
+    
+model<-lmer(Main_Yougov[ Main_Yougov$country=="JPN", i] ~ question + (1|id), data=Main_Yougov[Main_Yougov$country=="JPN" , ], na.action=na.omit)
+  }
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2),digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_jap[,count]=f[2,c("estimate")]
+names(dat_jap)[count] <- i
+
+  if (i=="full"|i=="no"){
+    
+model<-glmer(Main_Yougov[ Main_Yougov$country=="FRA", i] ~ question + (1|id), data=Main_Yougov[Main_Yougov$country=="FRA" , ], family="binomial",na.action=na.omit)
+
+  } else {
+    
+model<-lmer(Main_Yougov[ Main_Yougov$country=="FRA", i] ~ question + (1|id), data=Main_Yougov[Main_Yougov$country=="FRA" , ], na.action=na.omit)
+  }
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2),digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_fra[,count]=f[2,c("estimate")]
+names(dat_fra)[count] <- i
+
+  if (i=="full"|i=="no"){
+    
+model<-glmer(Main_Yougov[ Main_Yougov$country=="USA", i] ~ question + (1|id), data=Main_Yougov[Main_Yougov$country=="USA" , ], family="binomial",na.action=na.omit)
+
+  } else {
+    
+model<-lmer(Main_Yougov[ Main_Yougov$country=="USA", i] ~ question + (1|id), data=Main_Yougov[Main_Yougov$country=="USA" , ], na.action=na.omit)
+  }
+
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2),digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_usa[,count]=f[2,c("estimate")]
+names(dat_usa)[count] <- i
+
+count=count+1
+}
+
+
+dat_jap=melt(dat_jap, id.vars=c("country"))
+dat_jap=dcast(dat_jap, country ~ variable)
+dat_fra=melt(dat_fra, id.vars=c("country"))
+dat_fra=dcast(dat_fra, country ~ variable)
+dat_bra=melt(dat_bra, id.vars=c("country"))
+dat_bra=dcast(dat_bra, country ~ variable)
+dat_usa=melt(dat_usa, id.vars=c("country"))
+dat_usa=dcast(dat_usa, country ~ variable)
+
+full_yg_alloc=rbind(dat_bra, dat_fra, dat_jap, dat_usa)
+
+###MM data
+Main_MM$question=factor(Main_MM$question)
+
+variables=c("full", "no", "Future", "Past", "Years", "Quality", "Prognosis", "First", "Pay")
+dat=data.frame(country=levels(Main_MM$country))
+
+count=2
+countrycount=1
+for (i in variables){
+  for (j in levels(Main_MM$country)){
+  if (i=="full"|i=="no"){
+model<-glmer(Main_MM[Main_MM$country==j & Main_MM$exclude==1, i] ~ question + (1|id), data=Main_MM[Main_MM$country==j & Main_MM$exclude==1, ], family="binomial", na.action=na.omit)
+
+      } else {
+model<-lmer(Main_MM[Main_MM$country==j, i] ~ question + (1|id), data=Main_MM[Main_MM$country==j,], na.action=na.omit)
+
+      }
+
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2),digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat[countrycount,count]=f[2,c("estimate")]
+names(dat)[count] <- i
+countrycount=countrycount+1 }
+count=count+1
+countrycount=1
+}
+
+
+```
+
+
+```{r reallocation vs allocation YG S17, echo=FALSE}
+options(OutDec="\xB7")
+
+kbl(
+  full_yg_alloc,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", 'Full Triage', "No Triage", "Future", "Past", "Years", "Quality", "Prognosis", "First",  "Pay"),
+  caption = "Are Allocation and Re-allocation decisions different on the Yougov data?",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F,  font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001. Results are unstandardised beta weights", notation="none")
+
+
+```
+
+```{r reallocation vs allocation MM S18, echo=FALSE}
+options(OutDec="\xB7")
+
+kbl(
+  dat,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", 'Full Triage', "No Triage", "Future", "Past", "Years", "Quality", "Prognosis", "First",  "Pay"),
+  caption = "Are Allocation and Re-allocation decisions different in the MM data?",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size=8,  position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001. Results are unstandardised beta weights", notation="none")
+
+
+```
+
+
+
+
+
+##**4.1 Membership in the No Triage and Full Triage group**
+
+```{r figs S1, echo=FALSE,  out.width = "90%", fig.pos="H", fig.cap="Figure shows triage preferences on re-allocation decisions"}
+knitr::include_graphics(path="C:/Users/Bence/Dropbox/ventillators/FigureS1.png")
+```
+
+Figure S1 displays the same information as Figure 1 in the main article, only applied to re-allocation decisions instead of allocation decisions. The results are very similar. In all countries and regardless of the data source (Yougov or Moral Machine), the two largest groups are participants who would prefer No Triage and participants who would prefer Full Triage. In the Yougov data, the third largest group is always significantly smaller (Table S19). In the Moral Machine data, the third largest group is significantly smaller in 17 countries out of 20 (Table S20). As it was the case for allocation decisions, the data suggest that Yougov participants are more likely to prefer No Triage, compared to Moral Machine participants (Table S21). Tables S22 and S23 test the association of demographic variables with membership in the No Triage or Full Triage groups. As it was the case for allocations, there is no consistent pattern of associations across countries. 
+
+
+```{r demography stats reallocation, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+options(OutDec="\xB7")
+
+
+#belonging to the full triage group
+##MM
+Main_MM$subset=factor(Main_MM$subset)
+Main_MM$full=ifelse(Main_MM$subset=="Full Triage", 1, 0)
+Main_MM$no=ifelse(Main_MM$subset=="No Triage", 1, 0)
+Main_MM$gender=ifelse(Main_MM$survey_demography_gender=="male", 0.5, -0.5)
+Main_MM$patient=ifelse(Main_MM$survey_knowPatient=="yes",0.5, -0.5)
+
+
+variables=c("full", "no", "Future", "Past", "Years", "Quality", "Prognosis", "First", "Pay")
+dat=data.frame(variable=c("Gender", "Know COVID Patient", "Age", "Politics"))
+
+count=2
+for (i in variables){
+  if (i=="full"|i=="no"){
+model<-glmer(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$exclude==1, i] ~ gender + patient+ survey_demography_age + survey_demography_political + (1|country), data=Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$exclude==1, ], family="binomial", na.action=na.omit)
+
+      } else {
+model<-lmer(Main_MM[Main_MM$question=="Re-Allocations", i] ~ gender + patient+ survey_demography_age + survey_demography_political + (1|country), data=Main_MM[Main_MM$question=="Re-Allocations" , ], na.action=na.omit)
+
+      }
+
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat[,count]=f[2:5,c("estimate")]
+names(dat)[count] <- i
+count=count+1
+}
+
+
+
+#for Yougov all analysis separatly by country
+Main_Yougov$subset=factor(Main_Yougov$subset)
+Main_Yougov$full=ifelse(Main_Yougov$subset=="Full Triage", 1, 0)
+Main_Yougov$no=ifelse(Main_Yougov$subset=="No Triage", 1, 0)
+Main_Yougov$gender=ifelse(Main_Yougov$sex=="Male", 0.5, -0.5)
+Main_Yougov$patient=ifelse(Main_Yougov$knows.covid=="Yes",0.5, -0.5)
+Main_Yougov$smoker=ifelse(Main_Yougov$smoke=="Yes",0.5, -0.5)
+
+
+variables=c("full", "no", "Future", "Past", "Years", "Quality", "Prognosis", "First", "Pay")
+dat_bra=data.frame(country=rep("Brazil", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health"))
+
+count=3
+for (i in variables){
+  if (i=="full"|i=="no"){
+    family="binomial"
+  } else {
+    family="gaussian"
+  }
+
+model<-glm(Main_Yougov[Main_Yougov$question=="Re-allocations"& Main_Yougov$country=="BRA", i] ~ gender + patient+ age + smoker + health, data=Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country=="BRA" , ], family=family,na.action=na.omit)
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_bra[,count]=f[2:6,c("estimate")]
+names(dat_bra)[count] <- i
+count=count+1
+}
+
+dat_jap=data.frame(country=rep("Japan", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health"))
+
+count=3
+for (i in variables){
+  if (i=="full"|i=="no"){
+    family="binomial"
+  } else {
+    family="gaussian"
+  }
+
+model<-glm(Main_Yougov[Main_Yougov$question=="Re-allocations"& Main_Yougov$country=="JPN", i] ~ gender + patient+ age + smoker + health, data=Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country=="JPN" , ], family=family,na.action=na.omit)
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_jap[,count]=f[2:6,c("estimate")]
+names(dat_jap)[count] <- i
+count=count+1
+}
+
+France_Yougov$id=France_Yougov$caseid
+france=subset(France_Yougov, select=c("id", "political", "education"))
+
+france=merge(Main_Yougov,france, by="id")
+dat_fra=data.frame(country=rep("France", 7), var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education"))
+
+count=3
+for (i in variables){
+  if (i=="full"|i=="no"){
+    family="binomial"
+  } else {
+    family="gaussian"
+  }
+
+model<-glm(france[france$question=="Re-allocations", i] ~ gender + patient+ age + smoker + health + political + education, data=france[france$question=="Re-allocations", ], family=family,na.action=na.omit)
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_fra[,count]=f[2:8,c("estimate")]
+names(dat_fra)[count] <- i
+count=count+1
+}
+
+Us_Yougov$subset=factor(Us_Yougov$subset)
+Us_Yougov$full=ifelse(Us_Yougov$subset=="Full Triage", 1, 0)
+Us_Yougov$no=ifelse(Us_Yougov$subset=="No Triage", 1, 0)
+Us_Yougov$patient=ifelse(Us_Yougov$knows.covid=="Yes",0.5, -0.5)
+Us_Yougov$smoker=ifelse(Us_Yougov$smoke=="Yes",0.5, -0.5)
+
+dat_usa=data.frame(country=rep("US",9),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education", "Ethnicity", "Religiousity"))
+
+count=3
+for (i in variables){
+  if (i=="full"|i=="no"){
+    family="binomial"
+  } else {
+    family="gaussian"
+  }
+
+model<-glm(Us_Yougov[Us_Yougov$question=="Re-allocations", i] ~ gender + patient+ age + smoker + health2 + political + education + race_re +religious, data=Us_Yougov[Us_Yougov$question=="Re-allocations", ], family=family,na.action=na.omit)
+f=broom.mixed::tidy(model)
+f$estimate=format(round(f$estimate,2), digits=2)
+f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.01, function(x) paste0(x, "*") )
+f$estimate=apply_if(f$estimate, f$p.value<0.001, function(x) paste0(x, "*") )
+dat_usa[,count]=f[2:10,c("estimate")]
+names(dat_usa)[count] <- i
+count=count+1
+}
+
+dat_jap=melt(dat_jap, id.vars=c("country", "var"))
+dat_jap=dcast(dat_jap, country+var ~ variable)
+dat_fra=melt(dat_fra, id.vars=c("country", "var"))
+dat_fra=dcast(dat_fra, country+var ~ variable)
+dat_bra=melt(dat_bra, id.vars=c("country", "var"))
+dat_bra=dcast(dat_bra, country+var ~ variable)
+dat_usa=melt(dat_usa, id.vars=c("country", "var"))
+dat_usa=dcast(dat_usa, country+var ~ variable)
+
+full_yg=rbind(dat_bra, dat_fra, dat_jap, dat_usa)
+
+```
+
+
+```{r main result stat Yougov re-allocation, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+options(OutDec="\xB7")
+
+####statistical assasment of the main results
+#everything by country
+#firMMst 
+##statistical significant difference between no triage and full triage groups
+Main_Yougov$triage=ifelse(Main_Yougov$subset=="Full Triage",1, ifelse(Main_Yougov$subset=="No Triage", 0, NA))
+country_difference=data.frame(country=levels(Main_Yougov$country), chi_full_no=rep(0,4), p_full_no=rep(0,4), chi_no_third=rep(0,4), p_no_third=rep(0,4), chi_full_third=rep(0,4), p_full_third=rep(0,4), row.names=levels(Main_Yougov$country))
+
+#define the 3rd largest group for every country
+#the measure that people accept the most, eg. included in the list
+#for every country, count the number of times each measure is included in the list, then select the name of the highest count
+#count "Prognosis"
+
+no_vs_third = Main_Yougov %>%
+  filter(question=="Re-allocations") %>%
+  group_by(country, features) %>%
+  summarize(N = n())%>%
+  mutate(Sum=sum(N)) %>%
+  arrange(country, desc(N)) %>%
+  slice_head(n=3) %>%
+  arrange(country, features)%>%
+  slice(c(1,n()))%>%
+  subset(select=c(N, country))%>%
+  ungroup()
+
+full_vs_third = Main_Yougov %>%
+  filter(question=="Re-allocations") %>%
+  group_by(country, features) %>%
+  summarize(N = n())%>%
+  mutate(Sum=sum(N)) %>%
+  arrange(country, desc(N)) %>%
+  slice_head(n=3) %>%
+  arrange(country, features)%>%
+  slice_tail(n=2)%>%
+  subset(select=c(N, country))%>%
+  ungroup()
+
+#number of full vs no
+#by country
+count=1
+for (i in levels(Main_Yougov$country)){
+  res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$triage))
+  country_difference$chi_full_no[count]=round(unname(res$statistic),2)
+  country_difference$p_full_no[count]=as.character(round(unname(res$p.value),3))
+  
+  res=chisq.test(as.table(t(no_vs_third[no_vs_third$country==i, 1])))
+  country_difference$chi_no_third[count]=round(unname(res$statistic),2)
+  country_difference$p_no_third[count]=format(round(unname(res$p.value),3))
+  
+  res=chisq.test(as.table(t(full_vs_third[full_vs_third$country==i, 1])))
+  country_difference$chi_full_third[count]=round(unname(res$statistic),2)
+  country_difference$p_full_third[count]=round(unname(res$p.value),3)
+  count=count+1
+}
+
+for (i in colnames(country_difference)){
+  country_difference[, i] <-mypvalue(country_difference[,i])
+}
+
+country_difference_YG=country_difference
+
+
+
+#rejector, computing for each scale
+Main_Yougov$higher=ifelse(Main_Yougov$Random > Main_Yougov$First, Main_Yougov$Random, Main_Yougov$First)
+
+Main_Yougov$rfuture=ifelse(Main_Yougov$Future <= Main_Yougov$higher, 1,0)
+Main_Yougov$rpast=ifelse(Main_Yougov$Past <= Main_Yougov$higher, 1,0)
+Main_Yougov$ryears=ifelse(Main_Yougov$Years <= Main_Yougov$higher, 1,0)
+Main_Yougov$rquality=ifelse(Main_Yougov$Quality <= Main_Yougov$higher, 1,0)
+Main_Yougov$rprognosis=ifelse(Main_Yougov$Prognosis<= Main_Yougov$higher, 1,0)
+Main_Yougov$rpay=ifelse(Main_Yougov$Pay <= Main_Yougov$higher, 1,0)
+
+
+rejector_results=data.frame(country=levels(Main_Yougov$country), chi_rfuture=rep(0,4), p_rfuture=rep(0,4),chi_rpast=rep(0,4),  p_rpast=rep(0,4), chi_ryears=rep(0,4),  p_ryears=rep(0,4),chi_rquality=rep(0,4),  p_rquality=rep(0,4),chi_rprognosis=rep(0,4),  p_rprognosis=rep(0,4),chi_rpay=rep(0,4),  p_rpay=rep(0,4), row.names=levels(Main_Yougov$country))
+
+count=1
+for (i in levels(Main_Yougov$country)){
+  res = chisq.test(table(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rfuture))
+  rejector_results$chi_rfuture[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rfuture[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rfuture,na.rm=T)*100,1)
+
+  res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rpast))
+  rejector_results$chi_rpast[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rpast[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rpast,na.rm=T)*100,1)
+
+      res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$ryears))
+  rejector_results$chi_ryears[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_ryears[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$ryears,na.rm=T)*100,1)
+
+      res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rquality))
+  rejector_results$chi_rquality[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rquality[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rquality,na.rm=T)*100,1)
+
+        res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rprognosis))
+  rejector_results$chi_rprognosis[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rprognosis[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rprognosis,na.rm=T)*100,1)
+
+          res= chisq.test(table(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rpay))
+  rejector_results$chi_rpay[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rpay[count]=50-round(mean(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i, ]$rpay,na.rm=T)*100,1)
+
+  count=count+1
+}
+
+for (i in colnames(rejector_results)){
+  rejector_results[, i] <-mypvalue(rejector_results[,i])
+}
+
+
+rejector_results_YG=rejector_results
+##those who rejected, do they have a bigger value than 50?
+
+rejector_rate=data.frame(country=levels(Main_Yougov$country), t_rfuture=rep(0,4), p_rfuture=rep(0,4),t_rpast=rep(0,4),  p_rpast=rep(0,4), t_ryears=rep(0,4),  p_ryears=rep(0,4),t_rquality=rep(0,4),  p_rquality=rep(0,4),t_rprognosis=rep(0,4),  p_rprognosis=rep(0,4), t_rpay=rep(0,4),  p_rpay=rep(0,4), row.names=levels(Main_Yougov$country))
+
+
+count=1
+for (i in levels(Main_Yougov$country)){
+    res= t.test(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i & Main_Yougov$rfuture==1, ]$Future, mu=50, alternative="two.sided")
+  rejector_rate$t_rfuture[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rfuture[count]=round(unname(res$p.value),3)
+    res= t.test(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i & Main_Yougov$rpast==1, ]$Past, mu=50, alternative="two.sided")
+  rejector_rate$t_rpast[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rpast[count]=round(unname(res$p.value),3)
+    res= t.test(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i & Main_Yougov$ryears==1, ]$Years, mu=50, alternative="two.sided")
+  rejector_rate$t_ryears[count]=round(unname(res$statistic),2)
+  rejector_rate$p_ryears[count]=round(unname(res$p.value),3)
+    res= t.test(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i & Main_Yougov$rquality==1, ]$Quality, mu=50, alternative="two.sided")
+  rejector_rate$t_rquality[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rquality[count]=round(unname(res$p.value),3)
+      res= t.test(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i & Main_Yougov$rprognosis==1, ]$Prognosis, mu=50, alternative="two.sided")
+  rejector_rate$t_rprognosis[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rprognosis[count]=round(unname(res$p.value),3)
+        res= t.test(Main_Yougov[Main_Yougov$question=="Re-allocations" & Main_Yougov$country==i & Main_Yougov$rpay==1, ]$Pay, mu=50, alternative="two.sided")
+  rejector_rate$t_rpay[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rpay[count]=round(unname(res$p.value),3)
+  count=count+1
+}
+
+
+for (i in colnames(rejector_rate)){
+  rejector_rate[, i] <-mypvalue(rejector_rate[,i])
+}
+
+rejector_rate_YG=rejector_rate
+```
+
+``` {r main result tables Yougov re-allocation T20 S19, echo=FALSE}
+options(knitr.kable.NA = '-')
+options(OutDec="\xB7")
+
+kbl(
+  country_difference_YG,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
+  caption = "Differences among triage preferences on the Yougov data, re-allocation decisions",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Full vs. No" = 2, "No vs. Third" = 2, "Full vs Third" = 2))
+
+```
+
+```{r main result stat MM re-allocation, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+options(OutDec="\xB7")
+
+####statistical assasment of the main results
+#everything by country
+#first MM
+##statistical significant difference between no triage and full triage groups
+
+Main_MM$triage=ifelse(Main_MM$subset=="Full Triage",1, ifelse(Main_MM$subset=="No Triage", 0, NA))
+country_difference=data.frame(country=levels(Main_MM$country), chi_full_no=rep(0,20), p_full_no=rep(0,20), chi_no_third=rep(0,20), p_no_third=rep(0,20), chi_full_third=rep(0,20), p_full_third=rep(0,20), row.names=levels(Main_MM$country))
+
+#define the 3rd largest group for every country
+#the measure that people accept the most, eg. included in the list
+#for every country, count the number of times each measure is included in the list, then select the name of the highest count
+#count "Prognosis"
+
+no_vs_third = Main_MM %>%
+  filter(question=="Re-Allocations" & exclude==1) %>%
+  group_by(country, features) %>%
+  summarize(N = n())%>%
+  mutate(Sum=sum(N)) %>%
+  arrange(country, desc(N)) %>%
+  slice_head(n=3) %>%
+  arrange(country, features)%>%
+  slice(c(1,n()))%>%
+  subset(select=c(N, country))%>%
+  ungroup()
+
+full_vs_third = Main_MM %>%
+  filter(question=="Re-Allocations" & exclude==1) %>%
+  group_by(country, features) %>%
+  summarize(N = n())%>%
+  mutate(Sum=sum(N)) %>%
+  arrange(country, desc(N)) %>%
+  slice_head(n=3) %>%
+  arrange(country, features)%>%
+  slice_tail(n=2)%>%
+  subset(select=c(N, country))%>%
+  ungroup()
+
+#number of full vs no
+#by country
+count=1
+for (i in levels(Main_MM$country)){
+  res= chisq.test(table(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i & Main_MM$exclude==1, ]$triage))
+  country_difference$chi_full_no[count]=round(unname(res$statistic),2)
+  country_difference$p_full_no[count]=round(unname(res$p.value),3)
+  
+  res=chisq.test(as.table(t(no_vs_third[no_vs_third$country==i, 1])))
+  country_difference$chi_no_third[count]=round(unname(res$statistic),2)
+  country_difference$p_no_third[count]=round(unname(res$p.value),3)
+  
+  res=chisq.test(as.table(t(full_vs_third[full_vs_third$country==i, 1])))
+  country_difference$chi_full_third[count]=round(unname(res$statistic),2)
+  country_difference$p_full_third[count]=round(unname(res$p.value),3)
+  
+  count=count+1
+}
+
+
+for (i in colnames(country_difference)){
+  country_difference[, i] <-mypvalue(country_difference[,i])
+}
+country_difference_MM=country_difference
+
+
+#rejector, computing for each scale
+
+Main_MM$higher=ifelse(Main_MM$Random > Main_MM$First, Main_MM$Random, Main_MM$First)
+
+Main_MM$rfuture=ifelse(Main_MM$Future <= Main_MM$higher, 1,0)
+Main_MM$rpast=ifelse(Main_MM$Past <= Main_MM$higher, 1,0)
+Main_MM$ryears=ifelse(Main_MM$Years <= Main_MM$higher, 1,0)
+Main_MM$rquality=ifelse(Main_MM$Quality <= Main_MM$higher, 1,0)
+Main_MM$rprognosis=ifelse(Main_MM$Prognosis<= Main_MM$higher, 1,0)
+Main_MM$rpay=ifelse(Main_MM$Pay <= Main_MM$higher, 1,0)
+
+
+
+rejector_results=data.frame(country=levels(Main_MM$country), chi_rfuture=rep(0,20), p_rfuture=rep(0,20),chi_rpast=rep(0,20),  p_rpast=rep(0,20), chi_ryears=rep(0,20),  p_ryears=rep(0,20),chi_rquality=rep(0,20),  p_rquality=rep(0,20),chi_rprognosis=rep(0,20),  p_rprognosis=rep(0,20),chi_rpay=rep(0,20),  p_rpay=rep(0,20), row.names=levels(Main_MM$country))
+
+count=1
+for (i in levels(Main_MM$country)){
+  res = chisq.test(table(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rfuture))
+  rejector_results$chi_rfuture[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rfuture[count]=apply_if(rejector_results$chi_rfuture[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rfuture[count]=50-round(mean(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rfuture,na.rm=T)*100,1)
+
+  res= chisq.test(table(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rpast))
+  rejector_results$chi_rpast[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rpast[count]=apply_if(rejector_results$chi_rpast[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rpast[count]=50-round(mean(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rpast,na.rm=T)*100,1)
+
+      res= chisq.test(table(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$ryears))
+  rejector_results$chi_ryears[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_ryears[count]=apply_if(rejector_results$chi_ryears[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_ryears[count]=50-round(mean(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$ryears,na.rm=T)*100,1)
+
+      res= chisq.test(table(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rquality))
+  rejector_results$chi_rquality[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rquality[count]=apply_if(rejector_results$chi_rquality[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rquality[count]=50-round(mean(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rquality,na.rm=T)*100,1)
+
+        res= chisq.test(table(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rprognosis))
+  rejector_results$chi_rprognosis[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rprognosis[count]=apply_if(rejector_results$chi_rprognosis[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rprognosis[count]=50-round(mean(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rprognosis,na.rm=T)*100,1)
+
+          res= chisq.test(table(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rpay))
+  rejector_results$chi_rpay[count]=format(res$statistic,digits=2, nsmall=2)
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  rejector_results$chi_rpay[count]=apply_if(rejector_results$chi_rpay[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  rejector_results$p_rpay[count]=50-round(mean(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i, ]$rpay,na.rm=T)*100,1)
+
+  count=count+1
+}
+
+for (i in colnames(rejector_results)){
+  rejector_results[, i] <-mypvalue(rejector_results[,i])
+}
+rejector_results_MM=rejector_results
+##those who rejected, do they have a bigger value than 50?
+
+rejector_rate=data.frame(country=levels(Main_MM$country), t_rfuture=rep(0,20), p_rfuture=rep(0,20),t_rpast=rep(0,20),  p_rpast=rep(0,20), t_ryears=rep(0,20),  p_ryears=rep(0,20),t_rquality=rep(0,20),  p_rquality=rep(0,20),t_rprognosis=rep(0,20),  p_rprognosis=rep(0,20),t_rpay=rep(0,20),  p_rpay=rep(0,20),row.names=levels(Main_MM$country))
+
+
+count=1
+for (i in levels(Main_MM$country)){
+    res= t.test(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i & Main_MM$rfuture==1, ]$Future, mu=50, alternative="two.sided")
+  rejector_rate$t_rfuture[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rfuture[count]=round(unname(res$p.value),3)
+    res= t.test(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i & Main_MM$rpast==1, ]$Past, mu=50, alternative="two.sided")
+  rejector_rate$t_rpast[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rpast[count]=round(unname(res$p.value),3)
+    res= t.test(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i & Main_MM$ryears==1, ]$Years, mu=50, alternative="two.sided")
+  rejector_rate$t_ryears[count]=round(unname(res$statistic),2)
+  rejector_rate$p_ryears[count]=round(unname(res$p.value),3)
+    res= t.test(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i & Main_MM$rquality==1, ]$Quality, mu=50, alternative="two.sided")
+  rejector_rate$t_rquality[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rquality[count]=round(unname(res$p.value),3)
+    res= t.test(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i & Main_MM$rprognosis==1, ]$Prognosis, mu=50, alternative="two.sided")
+  rejector_rate$t_rprognosis[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rprognosis[count]=round(unname(res$p.value),3)
+      res= t.test(Main_MM[Main_MM$question=="Re-Allocations" & Main_MM$country==i & Main_MM$rprognosis==1, ]$Pay, mu=50, alternative="two.sided")
+  rejector_rate$t_rpay[count]=round(unname(res$statistic),2)
+  rejector_rate$p_rpay[count]=round(unname(res$p.value),3)
+
+  count=count+1
+}
+
+
+for (i in colnames(rejector_rate)){
+  rejector_rate[, i] <-mypvalue(rejector_rate[,i])
+}
+rejector_rate_MM=rejector_rate
+
+
+```
+
+``` {r main result MM tables reallocation T23 S20, echo=FALSE}
+options(OutDec="\xB7")
+
+kbl(
+  country_difference_MM,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
+  caption = "Differences among triage preferences on the MM data on re-allocation decisions",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Full vs. No" = 2, "No vs. Third" = 2, "Full vs Third" = 2))
+
+```
+
+
+``` {r Yougov vs MM reallocation, echo=FALSE}
+options(OutDec="\xB7")
+
+
+Main_Yougov$sample=1
+Main_MM$sample=2
+##select country, Future, Past, years, Quality, Prognosis, First, Pay, Random, subset, sample then rbind
+yg_rbind=subset(Main_Yougov,question=="Re-allocations", select=c(country, Future, Past, Years, Quality, Prognosis, First, Pay, no, full, sample))
+mm_rbind=subset(Main_MM,question=="Re-Allocations" & (country=="JPN"|country=="BRA"|country=="FRA"|country=="USA"), select=c(country, Future, Past, Years, Quality, Prognosis, First, Pay, no, full, sample))
+
+compare=rbind(yg_rbind,mm_rbind)
+compare$sample=factor(compare$sample, levels=c(1:2), labels=c("Yougov", "MM"))
+compare$country=factor(compare$country)
+#########comparing all for every country with a t-test.
+scale_diff=data.frame(country=levels(compare$country), t_fut=rep(0,4), p_fut=rep(0,4),t_pas=rep(0,4), p_pas=rep(0,4), t_year=rep(0,4), p_year=rep(0,4), t_qual=rep(0,4), p_qual=rep(0,4),t_prog=rep(0,4), p_prog=rep(0,4),t_firs=rep(0,4), p_firs=rep(0,4),  t_pay=rep(0,4), p_pay=rep(0,4), row.names=levels(compare$country))
+scale_diff2=data.frame(country=levels(compare$country), chi_full=rep(0,4), diff_full=rep(0,4), chi_no=rep(0,4), diff_no=rep(0,4), row.names=levels(compare$country))
+
+
+##t test for all the continuous, chi_square for triage 
+count=1
+for (i in levels(compare$country)) {
+  res=t.test(Future ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_fut[count]=round(unname(res$statistic),2)
+  scale_diff$p_fut[count]=round(unname(res$p.value),3)
+  res=t.test(Past ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_pas[count]=round(unname(res$statistic),2)
+  scale_diff$p_pas[count]=round(unname(res$p.value),3)
+    res=t.test(Years ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_year[count]=round(unname(res$statistic),2)
+  scale_diff$p_year[count]=round(unname(res$p.value),3)
+    res=t.test(Quality ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_qual[count]=round(unname(res$statistic),2)
+  scale_diff$p_qual[count]=round(unname(res$p.value),3)
+    res=t.test(Prognosis ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_prog[count]=round(unname(res$statistic),2)
+  scale_diff$p_prog[count]=round(unname(res$p.value),3)
+    res=t.test(First ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_firs[count]=round(unname(res$statistic),2)
+  scale_diff$p_firs[count]=round(unname(res$p.value),3)
+      res=t.test(Pay ~ sample, data=compare[compare$country==i,], na.action=na.omit)
+  scale_diff$t_pay[count]=round(unname(res$statistic),2)
+  scale_diff$p_pay[count]=round(unname(res$p.value),3)
+  count=count+1
+}
+
+count=1
+for (i in levels(compare$country)) {
+  res= chisq.test(table(compare[compare$country==i, ]$full, compare[compare$country==i, ]$sample))
+  scale_diff2$chi_full[count]=format(round(unname(res$statistic),2),digits=2)
+  scale_diff2$chi_full[count]=apply_if(scale_diff2$chi_full[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  scale_diff2$chi_full[count]=apply_if(scale_diff2$chi_full[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  scale_diff2$chi_full[count]=apply_if(scale_diff2$chi_full[count], res$p.value<0.001, function(x) paste0(x, "*") )
+  scale_diff2$diff_full[count]=round(mean(compare[compare$country==i & compare$sample=="Yougov",]$full, na.rm=T) - mean(compare[compare$country==i & compare$sample=="MM",]$full, na.rm=T),4)*100
+    res= chisq.test(table(compare[compare$country==i, ]$no, compare[compare$country==i, ]$sample))
+  scale_diff2$chi_no[count]=format(round(unname(res$statistic),2),digits=2)
+  scale_diff2$chi_no[count]=apply_if(scale_diff2$chi_no[count], res$p.value<0.05, function(x) paste0(x, "*") )
+  scale_diff2$chi_no[count]=apply_if(scale_diff2$chi_no[count], res$p.value<0.01, function(x) paste0(x, "*") )
+  scale_diff2$chi_no[count]=apply_if(scale_diff2$chi_no[count], res$p.value<0.001, function(x) paste0(x, "*") )
+    scale_diff2$diff_no[count]=round(mean(compare[compare$country==i & compare$sample=="Yougov",]$no, na.rm=T) - mean(compare[compare$country==i & compare$sample=="MM",]$no, na.rm=T),4)*100
+
+  count=count+1
+}
+
+
+for (i in colnames(scale_diff)){
+  scale_diff[, i] <-mypvalue(scale_diff[,i])
+}
+
+for (i in colnames(scale_diff2)){
+  scale_diff2[, i] <-mypvalue(scale_diff2[,i])
+}
+
+```
+
+```{r coherence table reallocation T26 S21, echo=FALSE}
+options(OutDec="\xB7")
+
+
+kbl(
+  scale_diff2,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "Difference", '$\\chi^2$ (1)', "Difference"),
+  caption = "Differences between MM and Yougov samples on Full and No triage responses on re-allocation decisions",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Full" = 2, "No" = 2))%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001.", notation="none")
+
+
+```
+
+
+```{r demography results tables YG reallocation T18 S22, echo=FALSE}
+options(OutDec="\xB7")
+
+
+kbl(
+  full_yg,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", "Variable", 'Full Triage', "No Triage", "Future", "Past", "Age", "Quality", "Prognosis", "First", "Pay"),
+  caption = "Effect of demographic variables on the Yougov data, Re-allocation decisions",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size=8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  collapse_rows(columns = 1, valign = "top", latex_hline = "major", row_group_label_position = "identity")%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001. Results are unstandardised beta weights", notation="none")
+
+
+```
+
+```{r dem results tables MM reallocation T19 S23, echo=FALSE}
+options(OutDec="\xB7")
+
+
+kbl(
+  dat,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Variable", 'Full Triage', "No Triage", "Future", "Past", "Age", "Quality", "Prognosis", "First",  "Pay"),
+  caption = "Effect of demographic variables on the MM survey, Re-allocation decisions",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001. Results are unstandardised beta weights.", notation="none")
+
+```
+
+
+
+
+##**4.2 Ratings of triage metrics** 
+
+
+```{r figs S2, echo=FALSE,  out.width = "90%", fig.pos="H", fig.cap="Figure shows metric rejection rates on re-allocation decisions"}
+knitr::include_graphics(path="C:/Users/Bence/Dropbox/ventillators/FigureS2.png")
+```
+
+
+Figure S2 displays the same information as Figure 2 in the main article, only applied to re-allocation decisions instead of allocation decisions. The results are again very similar. Prognosis is again the metrics which is rejected by the fewest participants, and receives the highest raw usability ratings, followed to a certain extent by the Age metric (Tables S24, S25, S26, S27). There is no consistent pattern of demographic effects on usability ratings, save perhaps a preference for women to prioritize healthcare workers, as it was already the case for allocations decisions (Tables S22 and S23).
+
+
+
+``` {r main result tables Yougov re-allocation T21-22 S24 S25, echo=FALSE}
+options(knitr.kable.NA = '-')
+options(OutDec="\xB7")
+
+kbl(
+  rejector_results_YG,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
+  caption = "Does the number of participants who rejects a metrics differ from $50\\%$ on the Yougov data, regarding re-allocation decisions?",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Future" = 2, "Past" = 2, "Age" = 2, "Quality" = 2, "Prognosis"=2, "Pay"=2))%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001", notation="none")
+
+kbl(
+  rejector_rate_YG,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", 't', "p", 't', "p", 't', "p",'t', "p",'t', "p",'t', "p"),
+  caption = "Does the rate of people who rejected a given metric differ from the mid-point of the scale (50) on the Yougov data regarding re-allocation decisions?",
+  centering=F,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Future" = 2, "Past" = 2, "Age" = 2, "Quality" = 2, "Prognosis"=2, "Pay"=2))
+
+```
+
+
+``` {r main result MM tables reallocation T24-25 S26 S27, echo=FALSE}
+options(OutDec="\xB7")
+
+kbl(
+  rejector_results_MM,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
+  caption = "Does the number of participants who rejects a metrics differ from $50\\%$ on the MM data regarding re-allocation decisions?",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Future" = 2, "Past" = 2, "Years" = 2, "Quality" = 2, "Prognosis"=2, "Pay"=2))%>%
+  add_footnote(label="Note. *p < 0.05, **p < 0.01, ***p < 0.001", notation="none")
+
+
+kbl(
+  rejector_rate_MM,
+  format = "latex",
+  booktabs = T,
+  escape=F,
+  col.names = c("Country", "t", "p", "t", "p", "t", "p","t", "p","t", "p","t", "p"),
+  caption = "Does the rate of people who rejected a given metric differ from the mid-point of the scale (50) on the MM data regarding re-allocation decisions?",
+  centering=T,
+  position="H"
+  )%>%
+  kable_styling( full_width = F, font_size = 8, position="left")%>%
+  row_spec(row=0, bold=TRUE)%>%
+  add_header_above(c(" ", "Future" = 2, "Past" = 2, "Years" = 2, "Quality" = 2, "Prognosis"=2, "Pay"=2))
+```
+
+\newpage
+#**5 Robustness checks for allocation decisions**
+
+```{r platform, echo=FALSE}
+#start with platform. 
+#all countries together
+#all measures separately, and nr of full and no trials separately
+library(ggplot2)
+library(DescTools)
+names(Main_MM)[names(Main_MM) == "Years"] <- "Age" 
+
+plotmm=subset(Main_MM, question=="Allocations", select=c(Future, Past, Age, Quality, Prognosis, First, Random, Pay, template))
+
+plotmm=melt(plotmm, id.vars="template")
+plotmm$template=factor(plotmm$template)
+plotmm=na.omit(plotmm)
+
+
+#plotmm2
+
+plotmm2=subset(Main_MM, question=="Allocations" & exclude==1, select=c(no, full, template))
+
+plotmm2=melt(plotmm2, id.vars="template")
+plotmm2$template=factor(plotmm2$template)
+plotmm2$variable=factor(plotmm2$variable, levels=c("no", "full"), labels=c("No triage", "Full triage"))
+
+plotmm2=na.omit(plotmm2)
+
+hit=c(table(plotmm2[plotmm2$value==1,]$value,plotmm2[plotmm2$value==1,]$variable,plotmm2[plotmm2$value==1,]$template))
+total=c(colSums(table(plotmm2$value,plotmm2$variable,plotmm2$template)))
+gra=data.frame(round(BinomCI(hit,total),3)*100)
+
+gra$variable=c("No Triage", "Full Triage", "No Triage", "Full Triage")
+gra$template=c("Desktop", "Desktop", "Mobile", "Mobile")
+
+
+```
+
+
+```{r,fig.pos="H",out.width="90%", fig.cap="Responses to the moral machine survey were not affected by the type of device used by participants (ratings of metrics and mechanisms)"}
+
+ggplot(plotmm, aes(fill = template, x=variable, y=value)) +
+stat_summary(fun=mean, geom="bar", position="dodge",  width=0.7)+
+  stat_summary(fun.data=mean_cl_boot, geom="errorbar", position=position_dodge(width=0.7), width=0.2)+
+  labs( y="Metric rates")+ theme_bw()+
+  expand_limits(y=c(0,100))+
+  scale_y_continuous(expand=c(0,0),breaks=c(0,10,20,30,40,50,60,70,80,90,100))+
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),plot.title=element_text( hjust=0.5, vjust=0.5, face="bold", size=17),
+        axis.title.x=element_blank(), axis.title.y=element_text(face="bold", size=10), axis.text.x = element_text(face="bold", size=12, colour="Black"), axis.text.y = element_text(face="bold", size=12, colour="Black"),
+        legend.title=element_blank(),legend.text=element_text(size=9), legend.position = c(0.9, 0.9))
+```
+
+```{r,fig.pos="H",out.width="90%", fig.cap="Responses to the moral machine survey were not affected by the type of device used by participants (membership in the No Triage and Full Triage groups)"}
+ggplot(gra, aes(fill = template, x=variable, y=est)) +
+  geom_bar(stat="identity", position=position_dodge(width=0.7), width=0.7) +
+  geom_errorbar(aes(ymin=lwr.ci, ymax=upr.ci), position=position_dodge(width=0.7), width=0.2)+
+  labs( y="Percent of people belongs (%)")+ theme_bw()+
+  expand_limits(y=c(0,100))+
+  scale_y_continuous(expand=c(0,0))+
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),plot.title=element_text( hjust=0.5, vjust=0.5, face="bold", size=17),
+        axis.title.x=element_blank(), axis.title.y=element_text(face="bold", size=10), axis.text.x = element_text(face="bold", size=12, colour="Black"), axis.text.y = element_text(face="bold", size=12, colour="Black"),
+        legend.title=element_blank(),legend.text=element_text(size=9), legend.position = c(0.9, 0.9))
+
+```
+
+
+
+
+```{r order effects stat, echo=FALSE}
+options(OutDec="\xB7")
+
+#first, separate columns "First" "Second" etc
+Main_MM$order=Main_MM$reviewOrder_covidq1
+Main_MM$order=str_remove_all(Main_MM$order, "\\[")
+Main_MM$order=str_remove_all(Main_MM$order, "\\]")
+Main_MM$order=str_remove_all(Main_MM$order, "\\'") 
+Main_MM$order=str_remove_all(Main_MM$order, " ") 
+Main_MM$order=str_replace_all(Main_MM$order, "ventilator-priority-helped-with-virus", "Past")
+Main_MM = Main_MM %>%
+  separate(order, into=c("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth"), sep=",")
+
+
+#second, subset relevant columns
+ordeffect=subset(Main_MM, question=="Allocations", select=c(first, second, third, fourth, fifth, sixth, seventh, eighth,Future, Past, Age, Quality, Prognosis, Random, First, Pay))
+#third melt, order variables as id.vars
+ordeffect=melt(ordeffect, id.vars=c("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth"))
+#fourth rename values in the order columns
+ordeffect=data.frame(apply(ordeffect, 2, function(x) str_replace_all(x, "ventilator-priority-helped-with-virus", "Past")))
+ordeffect=data.frame(apply(ordeffect, 2, function(x) str_replace_all(x, "ventilator-priority-first-in", "First")))
+ordeffect=data.frame(apply(ordeffect, 2, function(x) str_replace_all(x, "ventilator-priority-random-lottery", "Random")))
+ordeffect=data.frame(apply(ordeffect, 2, function(x) str_replace_all(x, "ventilator-priority-ability-to-pay", "Pay")))
+ordeffect=data.frame(apply(ordeffect, 2, function(x) str_replace_all(x, "ventilator-priority-quality-of-life", "Quality")))
+ordeffect=data.frame(apply(ordeffect, 2, function(x) str_replace_all(x, "ventilator-priority-years-of-life-remaining", "Age")))
+ordeffect=data.frame(apply(ordeffect, 2, function(x) str_replace_all(x, "ventilator-priority-might-help-with-virus", "Future")))
+ordeffect=data.frame(apply(ordeffect, 2, function(x) str_replace_all(x, "ventilator-priority-chance-of-recovery", "Prognosis")))
+ordeffect$variable=as.character(ordeffect$variable)
+
+#ifelse; if variable equals with first, 1, if equels second, 2 etc, otherwise NA
+attach(ordeffect)
+ordeffect$order=ifelse(variable==first, 1, ifelse(variable==second,2, ifelse(variable==third,3, ifelse(variable==fourth, 4, ifelse(variable==fifth, 5, ifelse(variable==sixth,6, ifelse(variable==seventh, 7, ifelse(variable==eighth, 8,NA))))))))
+detach(ordeffect)
+ordeffect$value=as.integer(ordeffect$value)
+ordeffect$order=factor(ordeffect$order, levels=c(1:8))
+
+
+```
+
+```{r, fig.pos="H",out.width="90%",fig.cap="Responses showed little sensitivity to the order in which questions appeared"}
+
+ggplot(ordeffect, aes(x=order, y=value)) +
+stat_summary(fun=mean, geom="bar", position="dodge",  width=0.7)+
+  stat_summary(fun.data=mean_cl_boot, geom="errorbar", position=position_dodge(width=0.7), width=0.2)+
+  labs( y="Metric rates")+ theme_bw()+
+  facet_wrap(facets=vars(variable))+
+  expand_limits(y=c(0,100))+
+  scale_y_continuous(expand=c(0,0),breaks=c(0,10,20,30,40,50,60,70,80,90,100))+
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),plot.title=element_text( hjust=0.5, vjust=0.5, face="bold", size=17),
+        axis.title.x=element_blank(), axis.title.y=element_text(face="bold", size=10), axis.text.x = element_text(face="bold", size=8, colour="Black"), axis.text.y = element_text(face="bold", size=10, colour="Black"),
+        legend.title=element_blank(),legend.text=element_text(size=9), legend.position = c(0.9, 0.9))
+
+```
+
+
+```{r second language effect, eacho=FALSE}
+
+attach(Main_MM)
+Main_MM$foreign_lang=ifelse((country=="AUS"|country=="USA"|country=="CAN"|country=="SGP"|country=="IND"|country=="GBR") & surveyLang=="en",1,
+                            ifelse((country=="CAN"|country=="FRA") & surveyLang=="fr", 1,
+                            ifelse((country!="AUS"|country!="USA"|country!="CAN"|country!="SGP"|country!="IND"|country!="GBR") & surveyLang!="en", 1,2)))
+
+detach(Main_MM)
+
+Main_MM$foreign_lang=factor(Main_MM$foreign_lang, levels=c(1,2), labels=c("Native", "Foreign"))
+
+
+#selecting columns of interests
+langeffect=subset(Main_MM, question=="Allocations", select=c("Future", "Past", "Age", "Quality", "Prognosis", "First", "Random", "foreign_lang"))
+#longformat
+langeffect=melt(langeffect, id.vars=c("foreign_lang"))
+```
+
+
+```{r, fig.pos="H",out.width="90%",fig.cap="Responses showed no sensitivity to second language effects"}
+
+ggplot(langeffect, aes(fill = foreign_lang, x=variable, y=value)) +
+stat_summary(fun=mean, geom="bar", position="dodge",  width=0.7)+
+  stat_summary(fun.data=mean_cl_boot, geom="errorbar", position=position_dodge(width=0.7), width=0.2)+
+  labs( y="Metric rates")+ theme_bw()+
+  expand_limits(y=c(0,100))+
+  scale_y_continuous(expand=c(0,0),breaks=c(0,10,20,30,40,50,60,70,80,90,100))+
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),plot.title=element_text( hjust=0.5, vjust=0.5, face="bold", size=17),
+        axis.title.x=element_blank(), axis.title.y=element_text(face="bold", size=10), axis.text.x = element_text(face="bold", size=12, colour="Black"), axis.text.y = element_text(face="bold", size=12, colour="Black"),
+        legend.title=element_blank(),legend.text=element_text(size=9), legend.position = c(0.9, 0.9))
+
+```
+
+```{r sourcePage results, eacho=FALSE}
+#selecting columns of interests
+sourceffect=subset(Main_MM, question=="Allocations", select=c("Future", "Past", "Age", "Quality", "Prognosis", "First", "Random", "sourcePage"))
+#longformat
+sourceffect=melt(sourceffect, id.vars=c("sourcePage"))
+sourceffect$sourcePage=factor(sourceffect$sourcePage, levels=c("homepage", "results page"), labels=c("Homepage", "Results page"))
+```
+
+```{r, fig.pos="H",out.width="90%",fig.cap="Responses to the moral machine survey was uneffected by the source (i.e., if partticipants filled out this survey after another moral dilemma study (Results page), or did it right on the homepage.)"}
+
+ggplot(sourceffect, aes(fill = sourcePage, x=variable, y=value)) +
+stat_summary(fun=mean, geom="bar", position="dodge",  width=0.7)+
+  stat_summary(fun.data=mean_cl_boot, geom="errorbar", position=position_dodge(width=0.7), width=0.2)+
+  labs( y="Metric rates")+ theme_bw()+
+  expand_limits(y=c(0,100))+
+  scale_y_continuous(expand=c(0,0),breaks=c(0,10,20,30,40,50,60,70,80,90,100))+
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),plot.title=element_text( hjust=0.5, vjust=0.5, face="bold", size=17),
+        axis.title.x=element_blank(), axis.title.y=element_text(face="bold", size=10), axis.text.x = element_text(face="bold", size=12, colour="Black"), axis.text.y = element_text(face="bold", size=12, colour="Black"),
+        legend.title=element_blank(),legend.text=element_text(size=9), legend.position = c(0.9, 0.9))
+
+```
