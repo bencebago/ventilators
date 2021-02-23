@@ -32,28 +32,15 @@ library(reshape2)
 
 
 
-setwd("C:/Users/Bence/OneDrive/Documents/research/ventillators")
-load("C:/Users/Bence/OneDrive/Documents/research/ventillators/Main_data_MM_corrected.rdata")
-d$country=factor(d$country)
-Main_MM <- d
-load("C:/Users/Bence/OneDrive/Documents/research/ventillators/Main_data_Yougov.rdata")
-Main_Yougov <- d.demo.common
-Main_Yougov=subset(Main_Yougov, select=c(-subset, -features))
-load("C:/Users/Bence/OneDrive/Documents/research/ventillators/Main_data_Yougov_without_pay_in_features.rdata")
-d=subset(d, select=c(id, features, subset, country, question))
-Main_Yougov=merge(Main_Yougov, d, by=c("id", "country", "question"))
+load("Moral_Machine_data.Rdata")
+load("Yougov_data.Rdata")
+Main_Yougov<-Main_Yougov2
 
-load("C:/Users/Bence/OneDrive/Documents/research/ventillators/Subject_data_MM.rdata")
-Main_MM =merge(Main_MM, Subject_Information_MM, by=c("id"))
-load("C:/Users/Bence/OneDrive/Documents/research/ventillators/MM_with_pay.rdata")
-d=subset(d, select=c("id", "Pay", "question"))
-Main_MM =merge(Main_MM, d, by=c("id", "question"))
-load("C:/Users/Bence/OneDrive/Documents/research/ventillators/US_specific_data.Yougov.rdata")
-Us_Yougov <- d.demo.us
-rm(list=c("d", "d.demo.common", "d.demo.us", "Subject_Information_MM"))
-   
-France_Yougov <- read.csv("Frenc_specific_Yougov.csv", header=T, sep=";", stringsAsFactors = T)
-France_Yougov <- subset(France_Yougov, country=="FR")
+Main_Yougov$subset=factor(Main_Yougov$subset)
+
+France_Yougov<-filter(Main_Yougov, country=="France")
+Us_Yougov<-filter(Main_Yougov, country=="USA")
+
 
 apply_if <- function(mat, p, f) {
   p[is.na(p)] <- FALSE
@@ -201,7 +188,7 @@ yg_t2=dcast(t1, country+variable ~ subset)
 
 
 #France
-France_Yougov$id=France_Yougov$caseid
+#France_Yougov$id=France_Yougov$caseid
 france=subset(France_Yougov, select=c("id", "conserv", "education"))
 france=merge(Main_Yougov,france, by="id")
 
@@ -218,7 +205,7 @@ t_fr$country="France"
 #add france to table 
 
 #US
-Us_Yougov$subset=factor(Us_Yougov$subset)
+#Us_Yougov$subset=factor(Us_Yougov$subset)
 
 us = Us_Yougov %>%
   filter(question=="Allocations" & subset!="Others" )%>%
@@ -269,20 +256,20 @@ full$survey=factor(full$survey)
 
 count=1
 for (i in levels(full$country)){
-  res=t.test(age ~ survey, data=full[full$country==i,], na.action=na.omit)
+  res=t.test(age ~ survey, data=full[full$country==i ,], na.action=na.omit)
   dem_diff$t_age[count]=round(unname(res$statistic),2)
   dem_diff$p_age[count]=round(unname(res$p.value),3)
   
-  res= chisq.test(table(full[full$country==i, ]$patient, full[full$country==i, ]$survey))
+  res= chisq.test(table(full[full$country==i , ]$patient, full[full$country==i , ]$survey))
   dem_diff$chi_patient[count]=round(unname(res$statistic),2)
   dem_diff$p_patient[count]=round(unname(res$p.value),3)
   
-  res= chisq.test(table(full[full$country==i, ]$gender, full[full$country==i, ]$survey))
+  res= chisq.test(table(full[full$country==i , ]$gender, full[full$country==i , ]$survey))
   dem_diff$chi_gender[count]=round(unname(res$statistic),2)
   dem_diff$p_gender[count]=round(unname(res$p.value),3)
 
   if (i=="France"|i=="USA"){
-  res=t.test(political ~ survey, data=full[full$country==i,], na.action=na.omit)
+  res=t.test(political ~ survey, data=full[full$country==i ,], na.action=na.omit)
   dem_diff$t_pol[count]=round(unname(res$statistic),2)
   dem_diff$p_pol[count]=round(unname(res$p.value),3)
   }
@@ -582,7 +569,6 @@ count=count+1
 }
 
 France_Yougov$education=ifelse(France_Yougov$education==1, 0.5, -0.5)
-France_Yougov$id=France_Yougov$caseid
 france=subset(France_Yougov, select=c("id", "political", "education"))
 
 france=merge(Main_Yougov,france, by="id")
@@ -607,18 +593,17 @@ names(dat_fra)[count] <- i
 count=count+1
 }
 
-Us_Yougov$subset=factor(Us_Yougov$subset)
 Us_Yougov$full=ifelse(Us_Yougov$subset=="Full Triage", 1, 0)
 Us_Yougov$no=ifelse(Us_Yougov$subset=="No Triage", 1, 0)
-Us_Yougov$gender=ifelse(Us_Yougov$gender=="Male", 0.5, -0.5)
+Us_Yougov$gender=ifelse(Us_Yougov$sex=="Male", 0.5, -0.5)
 Us_Yougov$patient=ifelse(Us_Yougov$knows.covid=="Yes",0.5, -0.5)
 Us_Yougov$smoker=ifelse(Us_Yougov$smoke=="Yes",0.5, -0.5)
 Us_Yougov$education=ifelse(Us_Yougov$education==1, 0.5, -0.5)
 Us_Yougov$race_re=ifelse(Us_Yougov$race_re==1, 0.5, -0.5)
 Us_Yougov$religious=ifelse(Us_Yougov$religious==1, 0.5, -0.5)
-Us_Yougov$health2=ifelse(Us_Yougov$health=="Poor",1, ifelse(Us_Yougov$health=="Fair",2,ifelse(Us_Yougov$health=="Good",3,
-                                                                                               ifelse(Us_Yougov$health=="Very good",4,
-                                                                                                      ifelse(Us_Yougov$health=="Excellent",5, NA)))))
+#Us_Yougov$health2=ifelse(Us_Yougov$health=="Poor",1, ifelse(Us_Yougov$health=="Fair",2,ifelse(Us_Yougov$health=="Good",3,
+#                                                                                               ifelse(Us_Yougov$health=="Very good",4,
+#                                                                                                      ifelse(Us_Yougov$health=="Excellent",5, #NA)))))
 
 dat_usa=data.frame(country=rep("US",9),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education", "Ethnicity", "Religiousity"))
 
@@ -630,7 +615,7 @@ for (i in variables){
     family="gaussian"
   }
 
-model<-glm(Us_Yougov[Us_Yougov$question=="Allocations", i] ~ gender + patient+ age + smoker + health2 + political + education + race_re +religious, data=Us_Yougov[Us_Yougov$question=="Allocations", ], family=family,na.action=na.omit)
+model<-glm(Us_Yougov[Us_Yougov$question=="Allocations", i] ~ gender + patient+ age + smoker + health + political + education + race_re +religious, data=Us_Yougov[Us_Yougov$question=="Allocations", ], family=family,na.action=na.omit)
 f=broom.mixed::tidy(model)
 f$estimate=format(round(f$estimate,2), digits=2)
 f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
@@ -830,6 +815,7 @@ options(OutDec="\xB7")
 kbl(
   country_difference_YG,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
@@ -1101,6 +1087,7 @@ kbl(
   scale_diff2,
   format = "latex",
   booktabs = T,
+  row.names = F,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "Difference", '$\\chi^2$ (1)', "Difference"),
   align = c(rep("l",5)),
@@ -1121,6 +1108,7 @@ options(OutDec="\xB7")
 kbl(
   country_difference_MM,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
@@ -1244,6 +1232,7 @@ options(OutDec="\xB7")
 kbl(
   rejector_results_YG,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
@@ -1265,6 +1254,7 @@ options(OutDec="\xB7")
 kbl(
   rejector_results_MM,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
@@ -1286,6 +1276,7 @@ options(OutDec="\xB7")
 kbl(
   scale_diff,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", 't', "p", 't', "p", 't', "p",'t', "p",'t', "p",'t', "p", 't', "p",'t', "p"),
@@ -1313,6 +1304,7 @@ options(OutDec="\xB7")
 kbl(
   rejector_rate_YG,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", 't', "p", 't', "p", 't', "p",'t', "p",'t', "p",'t', "p"),
@@ -1334,6 +1326,7 @@ options(OutDec="\xB7")
 kbl(
   rejector_rate_MM,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", "t", "p", "t", "p", "t", "p","t", "p","t", "p","t", "p"),
@@ -1636,10 +1629,10 @@ names(dat_jap)[count] <- i
 count=count+1
 }
 
-France_Yougov$id=France_Yougov$caseid
-france=subset(France_Yougov, select=c("id", "political", "education"))
+#France_Yougov$id=France_Yougov$caseid
+#france=subset(France_Yougov, select=c("id", "political", "education"))
 
-france=merge(Main_Yougov,france, by="id")
+#france=merge(Main_Yougov,france, by="id")
 dat_fra=data.frame(country=rep("France", 7), var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education"))
 
 count=3
@@ -1677,7 +1670,7 @@ for (i in variables){
     family="gaussian"
   }
 
-model<-glm(Us_Yougov[Us_Yougov$question=="Re-allocations", i] ~ gender + patient+ age + smoker + health2 + political + education + race_re +religious, data=Us_Yougov[Us_Yougov$question=="Re-allocations", ], family=family,na.action=na.omit)
+model<-glm(Us_Yougov[Us_Yougov$question=="Re-allocations", i] ~ gender + patient+ age + smoker + health + political + education + race_re +religious, data=Us_Yougov[Us_Yougov$question=="Re-allocations", ], family=family,na.action=na.omit)
 f=broom.mixed::tidy(model)
 f$estimate=format(round(f$estimate,2), digits=2)
 f$estimate=apply_if(f$estimate, f$p.value<0.05, function(x) paste0(x, "*") )
@@ -1876,6 +1869,7 @@ options(OutDec="\xB7")
 kbl(
   country_difference_YG,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
@@ -2065,6 +2059,7 @@ options(OutDec="\xB7")
 kbl(
   country_difference_MM,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
@@ -2160,6 +2155,7 @@ options(OutDec="\xB7")
 kbl(
   scale_diff2,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "Difference", '$\\chi^2$ (1)', "Difference"),
@@ -2240,6 +2236,7 @@ options(OutDec="\xB7")
 kbl(
   rejector_results_YG,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
@@ -2255,6 +2252,7 @@ kbl(
 kbl(
   rejector_rate_YG,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", 't', "p", 't', "p", 't', "p",'t', "p",'t', "p",'t', "p"),
@@ -2275,6 +2273,7 @@ options(OutDec="\xB7")
 kbl(
   rejector_results_MM,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
@@ -2291,6 +2290,7 @@ kbl(
 kbl(
   rejector_rate_MM,
   format = "latex",
+  row.names = F,
   booktabs = T,
   escape=F,
   col.names = c("Country", "t", "p", "t", "p", "t", "p","t", "p","t", "p","t", "p"),
