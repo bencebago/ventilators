@@ -309,24 +309,22 @@ The Yougov nationally representative panels in Brazil, France, Japan and the USA
 
 The Moral Machine sample included 7599 participants from from `r nlevels(Main_MM$country)` countries. These participants self-selected into the survey, which led to variations in sample size and sample characteristics across countries, as displayed in Table S2. The average age of the participants is M = `r round(mean(age_MM$survey_demography_age.mean, na.rm=T),1)` (SD = `r round(sd(age_MM$survey_demography_age.mean, na.rm=T),1)`), and in average, `r mean(MM_dem$sex_MM)`% of the participants identified as male, suggesting that the sample skews toward younger male participants (Table S3). Likewise only  `r mean(MM_dem$politics_MM)`% of the participants identified as conservatives. A majority of participants (`r 100-mean(MM_dem$know_MM)`%) did not personally know a COVID patient at the time the data was collected.
 
-###Sampling strategy in the Yougov sample
+##**1.2 Sampling strategy and data pre-processing**
 YouGov interviewed a total of 4426 respondents (1070 in the US, 1098 in France, 1122 in Japan, and 1136 in Brazil) who were then matched down to a sample of 4000 (1000 in each country) to produce the final dataset. The respondents were matched to a sampling frame on gender, age, race (all countries), and education (US, France and Japan only). The US frame was constructed by stratified sampling from the full 2017 American Community Survey (ACS) 1-year sample with selection within strata by weighted sampling with replacements (using the person weights on the public use file). A similar approach was used to construct the other country frame, with the 2018 Eurobarometer survey used for France, the
 2017 Pew Global Attitudes survey used for Japan, and the 2017 LAPOP AmericasBarometer survey used for Brazil.
 The matched cases were weighted to the sampling frame using propensity scores. The matched cases and the frame were combined and a logistic
 regression was estimated for inclusion in the frame. The propensity score function included (where appropriate) age, gender, race/
 ethnicity, years of education, and region. The propensity scores were grouped into deciles of the estimated propensity score in the frame and post-stratified according to these deciles. In the US, the weights were then post-stratified on 2016 Presidential vote choice,
-and a four-way stratification of gender, age (4-categories), race (4-categories), and education (4-categories), to produce the final weight. This was all done by Yougov, who, in te end, shared the final dataset of 4000 people with us. In all 4 countries, participants received money for participation: $0.5 in the USA; ???0.5 in France, 50 Yen in Japan and 1-2 Brazilian reals in Brazil.
+and a four-way stratification of gender, age (4-categories), race (4-categories), and education (4-categories), to produce the final weight. This was all done by Yougov, who, in te end, shared the final dataset of 4000 people with us. In all 4 countries, participants received money for participation: $0.5 in the USA; 0.5 Euro in France, 50 Yen in Japan and 1-2 Brazilian reals in Brazil.
 
-Note that in each of the 4 countries Yougov offers a different default demographic package. Hence, in the analysis below, the demographic variables differ from country to country.
-
-###Time frame of the Moral Machine dataset
-For Moral Machine, the survey was posted on 29 April 2020 (all in English). Survey in other languages was added on 31 May 2020. Data collected up to 8 September 2020 was included in the analysis (data collection is still happening).
+Note that in each of the 4 countries YouGov offers a different default demographic package. Hence, in the analysis below, the demographic variables differ from country to country.
 
 
-##**1.2 Data Pre-processing**
 The Moral Machine (MM) data went through pre-screening during which we excluded a number of entries. The original data included 9951 records. First, out of the 9951 submissions, 290 opted out from sharing their data (~3%). Of the remaining 9661 submissions, we excluded duplicate records per user, keeping the earliest record per each user. This reduced the dataset to 9569 entries. At this point we had records from 128 countries, out of which 19 had more than 100 submissions. We included the 20th country which had 96 answers for all questions, and filtered out the remaining countries, which led to our final dataset containing 7599 participants.
 
-No pre-screening was applied on the Yougov data.
+##**1.3 Time frame of the Moral Machine dataset**
+For Moral Machine, the survey was posted on 29 April 2020 (all in English). Survey in other languages was added on 31 May 2020. Data collected up to 8 September 2020 was included in the analysis (data collection is still happening).
+
 
 ``` {r demographic table 1, echo=FALSE}
 
