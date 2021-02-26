@@ -305,7 +305,7 @@ for (i in colnames(dem_diff)){
 
 ```
 ##**1.1 General description**
-The Yougov nationally representative panels in Brazil, France, Japan and the USA each comprised 1,000 individuals whose demographic characteristics are displayed in Table S1. Not all characteristics were measured in all countries (for example, religion and race were only recorded in the US sample).
+The YouGov nationally representative panels in Brazil, France, Japan and the USA each comprised 1,000 individuals whose demographic characteristics are displayed in Table S1. Not all characteristics were measured in all countries (for example, religion and race were only recorded in the US sample).
 
 The Moral Machine sample included 7599 participants from from `r nlevels(Main_MM$country)` countries. These participants self-selected into the survey, which led to variations in sample size and sample characteristics across countries, as displayed in Table S2. The average age of the participants is M = `r round(mean(age_MM$survey_demography_age.mean, na.rm=T),1)` (SD = `r round(sd(age_MM$survey_demography_age.mean, na.rm=T),1)`), and in average, `r mean(MM_dem$sex_MM)`% of the participants identified as male, suggesting that the sample skews toward younger male participants (Table S3). Likewise only  `r mean(MM_dem$politics_MM)`% of the participants identified as conservatives. A majority of participants (`r 100-mean(MM_dem$know_MM)`%) did not personally know a COVID patient at the time the data was collected.
 
@@ -315,12 +315,12 @@ YouGov interviewed a total of 4426 respondents (1070 in the US, 1098 in France, 
 The matched cases were weighted to the sampling frame using propensity scores. The matched cases and the frame were combined and a logistic
 regression was estimated for inclusion in the frame. The propensity score function included (where appropriate) age, gender, race/
 ethnicity, years of education, and region. The propensity scores were grouped into deciles of the estimated propensity score in the frame and post-stratified according to these deciles. In the US, the weights were then post-stratified on 2016 Presidential vote choice,
-and a four-way stratification of gender, age (4-categories), race (4-categories), and education (4-categories), to produce the final weight. This was all done by Yougov, who, in te end, shared the final dataset of 4000 people with us. In all 4 countries, participants received money for participation: $0.5 in the USA; 0.5 Euro in France, 50 Yen in Japan and 1-2 Brazilian reals in Brazil.
+and a four-way stratification of gender, age (4-categories), race (4-categories), and education (4-categories), to produce the final weight. This was all done by YouGov, who, in the end, shared the final dataset of 4000 people with us. In all 4 countries, participants received money for participation:  \$$0{\cdot}5$ in the USA; $0{\cdot}5$ Euro in France, 50 Yen in Japan and 1-2 Brazilian reals in Brazil.
 
 Note that in each of the 4 countries YouGov offers a different default demographic package. Hence, in the analysis below, the demographic variables differ from country to country.
 
 
-The Moral Machine (MM) data went through pre-screening during which we excluded a number of entries. The original data included 9951 records. First, out of the 9951 submissions, 290 opted out from sharing their data (~3%). Of the remaining 9661 submissions, we excluded duplicate records per user, keeping the earliest record per each user. This reduced the dataset to 9569 entries. At this point we had records from 128 countries, out of which 19 had more than 100 submissions. We included the 20th country which had 96 answers for all questions, and filtered out the remaining countries, which led to our final dataset containing 7599 participants.
+The Moral Machine (MM) data went through pre-screening during which we excluded a number of entries. The original data included 9951 records. First, out of the 9951 submissions, 290 opted out of sharing their data (~3%). Of the remaining 9661 submissions, we excluded duplicate records per user, keeping the earliest record per each user. This reduced the dataset to 9569 entries. At this point we had records from 128 countries, out of which 19 had more than 100 submissions. We included the 20th country which had 96 answers for all questions, and filtered out the remaining countries, which led to our final dataset containing 7599 participants.
 
 ##**1.3 Time frame of the Moral Machine dataset**
 For Moral Machine, the survey was posted on 29 April 2020 (all in English). Survey in other languages was added on 31 May 2020. Data collected up to 8 September 2020 was included in the analysis (data collection is still happening).
@@ -336,13 +336,14 @@ kbl(
   format = "latex",
   booktabs = T,
   escape=T,
-  col.names = c("Country", "Male (%)", "Age (SD)", "Know COVID patient (%)", "Health", "Smoker (%)", "College (%)", "Conservatives (%)", "Religious (%)","White (%)"),
+  col.names = c("Country", "Male (%)", "Age (SD)", "Know COVID patient (%)", "Health", "Smoker100 (%)", "College (%)", "Conservatives (%)", "Religious (%)","White (%)"),
   align=c("l", rep("c",9)),
   caption = "Demographic description of the four national samples",
   position = "H",
   )%>%
   kable_styling(full_width = F, font_size = 8, position="left", latex_options = "scale_down")%>%
-  row_spec(row=0, font_size=8, bold=TRUE)
+  row_spec(row=0, font_size=8, bold=TRUE)%>%
+  add_footnote(label= "Smoker100 measures whether or not participants smoked at least 100 cigarettes in their entire life")
 
 
 
@@ -385,7 +386,7 @@ kbl(
   booktabs = T,
   escape=F,
   col.names = c("Country", "t", "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", "t", "p"),
-  caption = "Differences between the demographic characteristics of the Yougov and MM samples",
+  caption = "Differences between the demographic characteristics of the YouGov and MM samples",
   centering=F,
   position="H"
   )%>%
@@ -444,7 +445,7 @@ kbl(
   )%>%
   kable_styling(full_width = F, font_size = 8, position="left")%>%
   row_spec(row=0, font_size=8, bold=TRUE)%>%
-  add_header_above(c(" ", "MM"=2, "Yougov"=2))
+  add_header_above(c(" ", "MM"=2, "YouGov"=2))
 
 
 
@@ -475,18 +476,18 @@ Participants then rated the follwing metrics, in randomized order:
 * Future: "Whether they might help with the virus in the future. (e.g. medical professionals & students, etc.)"
 * Pay: "Their ability to pay (prioritize patients who are insured/can afford treratment)"
 
-The questions regaridng allocation preferences were the same in the Yougov and MM surveys. After participants responded to allocation preferences, we recorded their preferences for re-allocation decisions (the order was always kept the same: first allocation, then re-allocation decisions). Before the actual re-allocation survey, participants received the following description:
+The questions regaridng allocation preferences were the same in the YouGov and MM surveys. After participants responded to allocation preferences, we recorded their preferences for re-allocation decisions (the order was always kept the same: first allocation, then re-allocation decisions). Before the actual re-allocation survey, participants received the following description:
 
 *"Many hospitals may have to decide whether to __withdraw__ a ventilator that is keeping one patient alive in order to give it to another patient. __How much of a role should each of these factors play in determining whether a ventilator should be moved from one patient to a new one?__"*
 
-Then participants received the same descriptions of each metrics except for the random metric that makes no sense in the re-allocation context (i.e. all ventilators are allocated already, there cannot be a random allocation). The survey ended with a set of demographic questions administered by Yougov (the exact set of demographic questions being different in different countries). In the moral machine version of the survey, the demographic questions included gender (Male/Female/other), age in years, and political ideology (on a continuous scale from Conservative to Progressive), in addition to the question: "Do you personally know someone who has been hospitalized for issues related to COVID-19? (Yes/No)"
-In the statistical analysis we coded these variables as follows: gender (-0.5 male, 0.5 female and others), know covid patient (-0.5 no, 0.5 yes), and reverse coding of political ideology to improve the readability of the results (but the scale from 0 to 100 remained). 
+Then participants received the same descriptions of each metrics except for the random metric that makes no sense in the re-allocation context (i.e. all ventilators are allocated already, there cannot be a random allocation). The survey ended with a set of demographic questions administered by YouGov (the exact set of demographic questions being different in different countries). In the moral machine version of the survey, the demographic questions included gender (Male/Female/other), age in years, and political ideology (on a continuous scale from Conservative to Progressive), in addition to the question: "Do you personally know someone who has been hospitalized for issues related to COVID-19? (Yes/No)"
+In the statistical analysis we coded these variables as follows: gender (-$0{\cdot}5$ male, $0{\cdot}5$ female and others), know covid patient (-$0{\cdot}5$ no, $0{\cdot}5$ yes), and reverse coding of political ideology to improve the readability of the results (but the scale from 0 to 100 remained). 
 
-In the Yougov survey, age, gender and knowing a COVID patient were measured in the same way (and were also coded in the same way in the statistical analysis as in the MM survey). For all countries, we recorded perceive health in a 5 point Likert scale from bad health (1) to very good health (5) and smoking history (whether they have smoked at least 100 cigarettes in their entire life; coded as 0.5 if "Yes" and -0.5 if "No"). In France, political ideology was measured using an ordinal scale with the following options (in parenthesis how it was coded in the statistical analysis): "Very progressive" (0, "Tres a gauche"), "Progressive" (0.25, "a gauche"), "Neither progressive nor conservative" (0.5, "ni a gauche, ni a droite"), "Centrum" (0.5, "Au centre"), "Conservative" (0.75, "a droite"), "Very conservative" (1, "tres a droite"). In the US, similar options were used: "Very liberal" (0), "Liberal" (0.25), "Moderate" (0.5), "Conservative" (0.75), "Very conservative" (1). In France and in the US, participants indicated their highest level of education, whch was recoded as being college educated or not (coded as 0.5 if yes, and -0.5 if no). In the US, participants indicated race/ethnicity (coded 0.5 if white, and -0.5 if minority) and religion (coded -0.5 for people who selected "Agnostic", "Atheist" or "nothing in particular", and 0.5 for people who selected a religion).
+In the YouGov survey, age, gender and knowing a COVID patient were measured in the same way (and were also coded in the same way in the statistical analysis as in the MM survey). For all countries, we recorded perceive health in a 5 point Likert scale from bad health (1) to very good health (5) and smoking history (whether they have smoked at least 100 cigarettes in their entire life; coded as $0{\cdot}5$ if "Yes" and -$0{\cdot}5$ if "No"). In France, political ideology was measured using an ordinal scale with the following options (in parenthesis how it was coded in the statistical analysis): "Very progressive" (0, "Tres a gauche"), "Progressive" ($0{\cdot}25$, "a gauche"), "Neither progressive nor conservative" ($0{\cdot}5$, "ni a gauche, ni a droite"), "Centrum" ($0{\cdot}5$, "Au centre"), "Conservative" ($0{\cdot}75$, "a droite"), "Very conservative" (1, "tres a droite"). In the US, similar options were used: "Very liberal" (0), "Liberal" ($0{\cdot}25$), "Moderate" ($0{\cdot}5$), "Conservative" ($0{\cdot}75$), "Very conservative" (1). In France and in the US, participants indicated their highest level of education, whch was recoded as being college educated or not (coded as $0{\cdot}5$ if yes, and -$0{\cdot}5$ if no). In the US, participants indicated race/ethnicity (coded $0{\cdot}5$ if white, and -$0{\cdot}5$ if minority) and religion (coded -$0{\cdot}5$ for people who selected "Agnostic", "Atheist" or "nothing in particular", and $0{\cdot}5$ for people who selected a religion).
 
 ##**3.2 Membership in the No Triage and Full Triage group**
 
-In the Yougov data, the two largest groups in all four countries are always participants who would prefer No Triage, followed by participants who would prefer Full Triage. As shown in Table S5, the third largest group is always significantly smaller than the No Triage and Full Triage groups. In the Moral Machine data, the two largest groups are also and always No Triage and Full Triage, but the top group within these two varies across countries. As shown in Table S6, the Moral Machine sample appears to be skewed in favor of the Full Triage group, when compared to the Yougov sample. In any case though, the Moral Machine results replicate the main result obtained in the Yougov sample: in 17 out of 20 countries, the third largest group is significantly smaller than both the No Triage and Full Triage groups (Table S7).
+In the YouGov data, the two largest groups in all four countries are always participants who would prefer No Triage, followed by participants who would prefer Full Triage. As shown in Table S5, the third largest group is always significantly smaller than the No Triage and Full Triage groups. In the Moral Machine data, the two largest groups are also and always No Triage and Full Triage, but the top group within these two varies across countries. As shown in Table S6, the Moral Machine sample appears to be skewed in favor of the Full Triage group, when compared to the YouGov sample. In any case though, the Moral Machine results replicate the main result obtained in the YouGov sample: in 17 out of 20 countries, the third largest group is significantly smaller than both the No Triage and Full Triage groups (Table S7).
 
 ```{r demography stats, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
@@ -538,7 +539,7 @@ Main_Yougov$smoker=ifelse(Main_Yougov$smoke=="Yes",0.5, -0.5)
 
 
 variables=c("full", "no", "Future", "Past", "Years", "Quality", "Prognosis", "First", "Random", "Pay")
-dat_bra=data.frame(country=rep("Brazil", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health"))
+dat_bra=data.frame(country=rep("Brazil", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking100", "Health"))
 
 count=3
 for (i in variables){
@@ -559,7 +560,7 @@ names(dat_bra)[count] <- i
 count=count+1
 }
 
-dat_jap=data.frame(country=rep("Japan", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health"))
+dat_jap=data.frame(country=rep("Japan", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking100", "Health"))
 
 count=3
 for (i in variables){
@@ -584,7 +585,7 @@ France_Yougov$education=ifelse(France_Yougov$education==1, 0.5, -0.5)
 france=subset(France_Yougov, select=c("id", "political", "education"))
 
 france=merge(Main_Yougov,france, by="id")
-dat_fra=data.frame(country=rep("France", 7), var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education"))
+dat_fra=data.frame(country=rep("France", 7), var=c("Gender", "Know COVID Patient", "Age", "Smoking100", "Health", "Politics", "Education"))
 
 count=3
 for (i in variables){
@@ -617,7 +618,7 @@ Us_Yougov$religious=ifelse(Us_Yougov$religious==1, 0.5, -0.5)
 #                                                                                               ifelse(Us_Yougov$health=="Very good",4,
 #                                                                                                      ifelse(Us_Yougov$health=="Excellent",5, #NA)))))
 
-dat_usa=data.frame(country=rep("US",9),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education", "Ethnicity", "Religiousity"))
+dat_usa=data.frame(country=rep("US",9),var=c("Gender", "Know COVID Patient", "Age", "Smoking100", "Health", "Politics", "Education", "Ethnicity", "Religiousity"))
 
 count=3
 for (i in variables){
@@ -831,7 +832,7 @@ kbl(
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
-  caption = "Differences among triage preferences on the Yougov data",
+  caption = "Differences among triage preferences on the YouGov data",
   centering=F,
   position="H"
   )%>%
@@ -1103,7 +1104,7 @@ kbl(
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "Difference", '$\\chi^2$ (1)', "Difference"),
   align = c(rep("l",5)),
-  caption = "Differences between MM and Yougov samples on Full and No triage responses",
+  caption = "Differences between MM and YouGov samples on Full and No triage responses",
   centering=F,
   position="H"
   )%>%
@@ -1150,7 +1151,7 @@ kbl(
   booktabs = T,
   escape=T,
   col.names = c("Country", "Average of...", "in the Full Triage group", "in the No Triage group"),
-  caption = "Demographic profiles of Full triage and No triage respondents by country on the Yougov sample",
+  caption = "Demographic profiles of Full triage and No triage respondents by country on the YouGov sample",
   position = "h",
   align=c(rep("l", 4)),
   )%>%
@@ -1198,7 +1199,7 @@ kbl(
   booktabs = T,
   escape=F,
   col.names = c("Country", "Variable", 'Full Triage', "No Triage", "Future", "Past", "Age", "Quality", "Prognosis", "First", "Random", "Pay"),
-  caption = "Effect of demographic variables on the Yougov data",
+  caption = "Effect of demographic variables on the YouGov data",
   centering=F,
   position="H"
   )%>%
@@ -1248,7 +1249,7 @@ kbl(
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
-  caption = "Does the number of participants who rejects a metrics differ from $50\\%$ on the Yougov data?",
+  caption = "Does the number of participants who rejects a metrics differ from $50\\%$ on the YouGov data?",
   centering=F,
   position="H"
   )%>%
@@ -1293,7 +1294,7 @@ kbl(
   escape=F,
   col.names = c("Country", 't', "p", 't', "p", 't', "p",'t', "p",'t', "p",'t', "p", 't', "p",'t', "p"),
   align = c("l", "c", "c", "c", "c","c", "c","c", "c"," c", "c","c", "c", "c","c" ),
-  caption = "Differences between MM and Yougov samples on each metric",
+  caption = "Differences between MM and YouGov samples on each metric",
   centering=F,
   position="H"
   )%>%
@@ -1320,7 +1321,7 @@ kbl(
   booktabs = T,
   escape=F,
   col.names = c("Country", 't', "p", 't', "p", 't', "p",'t', "p",'t', "p",'t', "p"),
-  caption = "Does the rate of people who rejected a given metric differ from the mid-point of the scale (50) on the Yougov data?",
+  caption = "Does the rate of people who rejected a given metric differ from the mid-point of the scale (50) on the YouGov data?",
   centering=F,
   position="H"
   )%>%
@@ -1506,7 +1507,7 @@ kbl(
   booktabs = T,
   escape=F,
   col.names = c("Country", 'Full Triage', "No Triage", "Future", "Past", "Years", "Quality", "Prognosis", "First",  "Pay"),
-  caption = "Are Allocation and Re-allocation decisions different on the Yougov data?",
+  caption = "Are Allocation and Re-allocation decisions different on the YouGov data?",
   centering=T,
   position="H"
   )%>%
@@ -1599,7 +1600,7 @@ Main_Yougov$smoker=ifelse(Main_Yougov$smoke=="Yes",0.5, -0.5)
 
 
 variables=c("full", "no", "Future", "Past", "Years", "Quality", "Prognosis", "First", "Pay")
-dat_bra=data.frame(country=rep("Brazil", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health"))
+dat_bra=data.frame(country=rep("Brazil", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking100", "Health"))
 
 count=3
 for (i in variables){
@@ -1620,7 +1621,7 @@ names(dat_bra)[count] <- i
 count=count+1
 }
 
-dat_jap=data.frame(country=rep("Japan", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health"))
+dat_jap=data.frame(country=rep("Japan", 5),var=c("Gender", "Know COVID Patient", "Age", "Smoking100", "Health"))
 
 count=3
 for (i in variables){
@@ -1645,7 +1646,7 @@ count=count+1
 #france=subset(France_Yougov, select=c("id", "political", "education"))
 
 #france=merge(Main_Yougov,france, by="id")
-dat_fra=data.frame(country=rep("France", 7), var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education"))
+dat_fra=data.frame(country=rep("France", 7), var=c("Gender", "Know COVID Patient", "Age", "Smoking100", "Health", "Politics", "Education"))
 
 count=3
 for (i in variables){
@@ -1672,7 +1673,7 @@ Us_Yougov$no=ifelse(Us_Yougov$subset=="No Triage", 1, 0)
 Us_Yougov$patient=ifelse(Us_Yougov$knows.covid=="Yes",0.5, -0.5)
 Us_Yougov$smoker=ifelse(Us_Yougov$smoke=="Yes",0.5, -0.5)
 
-dat_usa=data.frame(country=rep("US",9),var=c("Gender", "Know COVID Patient", "Age", "Smoking", "Health", "Politics", "Education", "Ethnicity", "Religiousity"))
+dat_usa=data.frame(country=rep("US",9),var=c("Gender", "Know COVID Patient", "Age", "Smoking100", "Health", "Politics", "Education", "Ethnicity", "Religiousity"))
 
 count=3
 for (i in variables){
@@ -1885,7 +1886,7 @@ kbl(
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p", '$\\chi^2$ (1)', "p"),
-  caption = "Differences among triage preferences on the Yougov data, re-allocation decisions",
+  caption = "Differences among triage preferences on the YouGov data, re-allocation decisions",
   centering=F,
   position="H"
   )%>%
@@ -2023,9 +2024,9 @@ for (i in levels(Main_MM$country)){
   count=count+1
 }
 
-for (i in colnames(rejector_results)){
-  rejector_results[, i] <-mypvalue(rejector_results[,i])
-}
+#for (i in colnames(rejector_results)){
+#  rejector_results[, i] <-mypvalue(rejector_results[,i])
+#}
 rejector_results_MM=rejector_results
 ##those who rejected, do they have a bigger value than 50?
 
@@ -2194,7 +2195,7 @@ kbl(
   booktabs = T,
   escape=F,
   col.names = c("Country", "Variable", 'Full Triage', "No Triage", "Future", "Past", "Age", "Quality", "Prognosis", "First", "Pay"),
-  caption = "Effect of demographic variables on the Yougov data, Re-allocation decisions",
+  caption = "Effect of demographic variables on the YouGov data, Re-allocation decisions",
   centering=T,
   position="H"
   )%>%
@@ -2252,7 +2253,7 @@ kbl(
   booktabs = T,
   escape=F,
   col.names = c("Country", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff", '$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff",'$\\chi^2$ (1)', "Diff"),
-  caption = "Does the number of participants who rejects a metrics differ from $50\\%$ on the Yougov data, regarding re-allocation decisions?",
+  caption = "Does the number of participants who rejects a metrics differ from $50\\%$ on the YouGov data, regarding re-allocation decisions?",
   centering=F,
   position="H"
   )%>%
