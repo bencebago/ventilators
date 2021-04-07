@@ -1,5 +1,5 @@
 ---
-title: "Supplementary Appendix for 'Polarized citizen preferences for the ethical allocation of scarce medical resources in twenty countries'"
+title: "Supplementary Appendix for 'Policies for allocating scarce medical resources will face universal citizen polarization'"
 author: "E Awad, B Bago, JF Bonnefon, NA Christakis, I Rahwan, A Shariff"
 
 
@@ -56,7 +56,6 @@ apply_if <- function(mat, p, f) {
 
 
 ```{r demographics, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-options(OutDec="\xB7")
 
 
 sex_MM=round(prop.table(table(Main_MM$country, Main_MM$survey_demography_gender),1)*100,0)
@@ -283,9 +282,9 @@ mypvalue <- function (x) {
           if (is.na(x[i])){
             t[i]<-NA
         } else if(abs(as.numeric(x[i])) < 0.0001  ) {
-            t[i]<-"$< 0{\\cdot}0001$"
+            t[i]<-"$< 0.0001$"
         } else if(abs(as.numeric(x[i])) < 0.001) {
-            t[i]<-"$< 0{\\cdot}001$"
+            t[i]<-"$< 0.001$"
         } else {
         t[i]<-x[i]
         }
@@ -315,7 +314,7 @@ YouGov interviewed a total of 4426 respondents (1070 in the US, 1098 in France, 
 The matched cases were weighted to the sampling frame using propensity scores. The matched cases and the frame were combined and a logistic
 regression was estimated for inclusion in the frame. The propensity score function included (where appropriate) age, gender, race/
 ethnicity, years of education, and region. The propensity scores were grouped into deciles of the estimated propensity score in the frame and post-stratified according to these deciles. In the US, the weights were then post-stratified on 2016 Presidential vote choice,
-and a four-way stratification of gender, age (4-categories), race (4-categories), and education (4-categories), to produce the final weight. This was all done by YouGov, who, in the end, shared the final dataset of 4000 people with us. In all 4 countries, participants received money for participation:  \$$0{\cdot}5$ in the USA; $0{\cdot}5$ Euro in France, 50 Yen in Japan and 1-2 Brazilian reals in Brazil.
+and a four-way stratification of gender, age (4-categories), race (4-categories), and education (4-categories), to produce the final weight. This was all done by YouGov, who, in the end, shared the final dataset of 4000 people with us. In all 4 countries, participants received money for participation:  $0.5 in the USA; 0.5 Euro in France, 50 Yen in Japan and 1-2 Brazilian reals in Brazil.
 
 Note that in each of the 4 countries YouGov offers a different default demographic package. Hence, in the analysis below, the demographic variables differ from country to country.
 
@@ -329,7 +328,6 @@ For Moral Machine, the survey was posted on 29 April 2020 (all in English). Surv
 ``` {r demographic table 1, echo=FALSE}
 
 options(knitr.kable.NA = '-')
-options(OutDec="\xB7")
 
 kbl(
   Yougov_dem,
@@ -353,7 +351,6 @@ kbl(
 
 options(knitr.kable.NA = '-')
 
-options(OutDec="\xB7")
 
 kbl(
   MM_dem,
@@ -377,7 +374,6 @@ kbl(
 ``` {r demographic table 3, echo=FALSE}
 
 options(knitr.kable.NA = '-')
-options(OutDec="\xB7")
 
 
 kbl(
@@ -402,7 +398,6 @@ kbl(
 For exploratory purposes, we included a triage metric not usually discussed in official guidelines, the ability to pay for treatment. We do not consider that metric further in the main text or in this appendix. As shown in Table S4, it received by far the lowest usability ratings of all metrics, and was always rejected by a large majority of respondents.
 
 ```{r pay, echo=FALSE}
-options(OutDec="\xB7")
 options(knitr.kable.NA = '-')
 
 
@@ -429,7 +424,6 @@ pay_table$Pay.mean.y=ifelse(pay_table$Pay.mean.y=="NA (NA)", "-", pay_table$Pay.
 ``` {r pay table S4, echo=FALSE}
 
 options(knitr.kable.NA = '-')
-options(OutDec="\xB7")
 
 
 kbl(
@@ -481,9 +475,9 @@ The questions regaridng allocation preferences were the same in the YouGov and M
 *"Many hospitals may have to decide whether to __withdraw__ a ventilator that is keeping one patient alive in order to give it to another patient. __How much of a role should each of these factors play in determining whether a ventilator should be moved from one patient to a new one?__"*
 
 Then participants received the same descriptions of each metrics except for the random metric that makes no sense in the re-allocation context (i.e. all ventilators are allocated already, there cannot be a random allocation). The survey ended with a set of demographic questions administered by YouGov (the exact set of demographic questions being different in different countries). In the moral machine version of the survey, the demographic questions included gender (Male/Female/other), age in years, and political ideology (on a continuous scale from Conservative to Progressive), in addition to the question: "Do you personally know someone who has been hospitalized for issues related to COVID-19? (Yes/No)"
-In the statistical analysis we coded these variables as follows: gender (-$0{\cdot}5$ male, $0{\cdot}5$ female and others), know covid patient (-$0{\cdot}5$ no, $0{\cdot}5$ yes), and reverse coding of political ideology to improve the readability of the results (but the scale from 0 to 100 remained). 
+In the statistical analysis we coded these variables as follows: gender (-0.5 male, 0.5 female and others), know covid patient (-0.5 no, 0.5 yes), and reverse coding of political ideology to improve the readability of the results (but the scale from 0 to 100 remained). 
 
-In the YouGov survey, age, gender and knowing a COVID patient were measured in the same way (and were also coded in the same way in the statistical analysis as in the MM survey). For all countries, we recorded perceive health in a 5 point Likert scale from bad health (1) to very good health (5) and smoking history (whether they have smoked at least 100 cigarettes in their entire life; coded as $0{\cdot}5$ if "Yes" and -$0{\cdot}5$ if "No"). In France, political ideology was measured using an ordinal scale with the following options (in parenthesis how it was coded in the statistical analysis): "Very progressive" (0, "Tres a gauche"), "Progressive" ($0{\cdot}25$, "a gauche"), "Neither progressive nor conservative" ($0{\cdot}5$, "ni a gauche, ni a droite"), "Centrum" ($0{\cdot}5$, "Au centre"), "Conservative" ($0{\cdot}75$, "a droite"), "Very conservative" (1, "tres a droite"). In the US, similar options were used: "Very liberal" (0), "Liberal" ($0{\cdot}25$), "Moderate" ($0{\cdot}5$), "Conservative" ($0{\cdot}75$), "Very conservative" (1). In France and in the US, participants indicated their highest level of education, whch was recoded as being college educated or not (coded as $0{\cdot}5$ if yes, and -$0{\cdot}5$ if no). In the US, participants indicated race/ethnicity (coded $0{\cdot}5$ if white, and -$0{\cdot}5$ if minority) and religion (coded -$0{\cdot}5$ for people who selected "Agnostic", "Atheist" or "nothing in particular", and $0{\cdot}5$ for people who selected a religion).
+In the YouGov survey, age, gender and knowing a COVID patient were measured in the same way (and were also coded in the same way in the statistical analysis as in the MM survey). For all countries, we recorded perceive health in a 5 point Likert scale from bad health (1) to very good health (5) and smoking history (whether they have smoked at least 100 cigarettes in their entire life; coded as 0.5 if "Yes" and -0.5 if "No"). In France, political ideology was measured using an ordinal scale with the following options (in parenthesis how it was coded in the statistical analysis): "Very progressive" (0, "Tres a gauche"), "Progressive" (0.25, "a gauche"), "Neither progressive nor conservative" (0.5, "ni a gauche, ni a droite"), "Centrum" (0.5, "Au centre"), "Conservative" (0.75, "a droite"), "Very conservative" (1, "tres a droite"). In the US, similar options were used: "Very liberal" (0), "Liberal" (0.25), "Moderate" (0.5), "Conservative" (0.75), "Very conservative" (1). In France and in the US, participants indicated their highest level of education, whch was recoded as being college educated or not (coded as 0.5 if yes, and -0.5 if no). In the US, participants indicated race/ethnicity (coded 0.5 if white, and -0.5 if minority) and religion (coded -0.5 for people who selected "Agnostic", "Atheist" or "nothing in particular", and 0.5 for people who selected a religion).
 
 ##**3.2 Membership in the No Triage and Full Triage group**
 
@@ -491,7 +485,6 @@ In the YouGov data, the two largest groups in all four countries are always part
 
 ```{r demography stats, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-options(OutDec="\xB7")
 
 
 
@@ -653,7 +646,6 @@ full_yg=rbind(dat_bra, dat_fra, dat_jap, dat_usa)
 ```
 
 ```{r main result stat Yougov, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-#options(OutDec="\xB7")
 
 
 ####statistical assasment of the main results
@@ -823,7 +815,6 @@ rejector_rate_YG=rejector_rate
 ``` {r main result tables Yougov T8 S5, echo=FALSE}
 
 options(knitr.kable.NA = '-')
-options(OutDec="\xB7")
 
 kbl(
   country_difference_YG,
@@ -844,7 +835,6 @@ kbl(
 ```
 
 ```{r main result stat MM, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-options(OutDec="\xB7")
 
 ####statistical assasment of the main results
 #everything by country
@@ -1016,7 +1006,6 @@ rejector_rate_MM=rejector_rate
 ```
 
 ``` {r Yougov vs MM, echo=FALSE}
-options(OutDec="\xB7")
 
 Main_Yougov$country=factor(Main_Yougov$country, levels=c("Brazil", "France", "Japan", "USA"), labels=c("BRA", "FRA", "JPN", "USA"))
 Main_Yougov$sample=1
@@ -1093,7 +1082,6 @@ for (i in colnames(scale_diff2)){
 ```
 
 ```{r coherence table T14 S6, echo=FALSE}
-options(OutDec="\xB7")
 
 
 kbl(
@@ -1116,7 +1104,6 @@ kbl(
 ```
 
 ``` {r main result MM tables T11 S7, echo=FALSE}
-options(OutDec="\xB7")
 
 kbl(
   country_difference_MM,
@@ -1141,7 +1128,6 @@ For descriptive purposes, Table S8 displays the demographic profile of participa
 ``` {r demographic table 4 S8, echo=FALSE}
 
 options(knitr.kable.NA = '-')
-options(OutDec="\xB7")
 
 
 rownames(yg_comp)<-NULL
@@ -1166,7 +1152,6 @@ kbl(
 ``` {r demographic table 5 S9, echo=FALSE}
 
 options(knitr.kable.NA = '-')
-options(OutDec="\xB7")
 
 
 kbl(
@@ -1190,7 +1175,6 @@ kbl(
 
 
 ```{r demography results tables YG T6 S10, echo=FALSE}
-options(OutDec="\xB7")
 
 
 kbl(
@@ -1212,7 +1196,6 @@ kbl(
 ```
 
 ```{r dem results tables MM T7 S11, echo=FALSE}
-options(OutDec="\xB7")
 
 kbl(
   dat,
@@ -1234,12 +1217,16 @@ kbl(
  
 ##**3.3 Ratings of triage metrics** 
 
-To test the reconciliation potential of each metric, we first consider whether a majority of participants rejects this metric, in the sense that it is rated lower than either the random lottery or the first-come-first served mechanisms. Table S12 summarizes the results of this test in the four countries included in the Yougov data, and shows that not a single metric is accepted by a significant majority in any country. On the contrary, all metrics are rejected by a significant majority of participants in Brazil and the USA. Only the Prognosis metric shows some potential, since it is accepted by a (non-significant) majority of participants in France and Japan. Table S13 summarizes the results obtained with the Moral Machine data. These results suggest that the Prognosis metric may indeed be the one with the greatest reconciliation potential, since it is accepted by a majority of participants in 17 countries out of 20. However, this majority is only significant in 5 countries. Likewise, the Age metric is accepted by a majority of participants in 14 countries, but this majority is only significant in one country. We must be careful when interpreting the results, since Table S14 shows that the Moral Machine sample was significantly skewed in favor of these two metrics, compared to the Yougov sample.
+To test the reconciliation potential of each metric, we first consider whether a majority of participants rejects this metric, in the sense that it is rated lower than either the random lottery or the first-come-first served mechanisms (Figure 2). Table S12 summarizes the results of this test in the four countries included in the Yougov data, and shows that not a single metric is accepted by a significant majority in any country. On the contrary, all metrics are rejected by a significant majority of participants in Brazil and the USA. Only the Prognosis metric shows some potential, since it is accepted by a (non-significant) majority of participants in France and Japan. Table S13 summarizes the results obtained with the Moral Machine data. These results suggest that the Prognosis metric may indeed be the one with the greatest reconciliation potential, since it is accepted by a majority of participants in 17 countries out of 20. However, this majority is only significant in 5 countries. Likewise, the Age metric is accepted by a majority of participants in 14 countries, but this majority is only significant in one country. We must be careful when interpreting the results, since Table S14 shows that the Moral Machine sample was significantly skewed in favor of these two metrics, compared to the Yougov sample.
+
+```{r figs formerS2, echo=FALSE,  out.width = "90%", fig.pos="H", fig.cap="Figure shows metric rejection rates on allocation decisions"}
+knitr::include_graphics(path="C:/Users/Bence/Dropbox/ventillators/formerFigureS2.png")
+```
+
 
 ``` {r main result tables Yougov T9 S12, echo=FALSE}
 
 options(knitr.kable.NA = '-')
-options(OutDec="\xB7")
 
 
 kbl(
@@ -1262,7 +1249,6 @@ kbl(
 
 
 ``` {r main result MM tables T12 S13, echo=FALSE}
-options(OutDec="\xB7")
 
 kbl(
   rejector_results_MM,
@@ -1284,7 +1270,6 @@ kbl(
 
 
 ```{r coherence table T15 S14, echo=FALSE}
-options(OutDec="\xB7")
 
 kbl(
   scale_diff,
@@ -1311,8 +1296,6 @@ To further test the reconciliation potential of each metric, we consider its raw
 
 options(knitr.kable.NA = '-')
 
-options(OutDec="\xB7")
-
 
 kbl(
   rejector_rate_YG,
@@ -1333,7 +1316,6 @@ kbl(
 
 ``` {r main result MM tables T13 S16, echo=FALSE}
 
-options(OutDec="\xB7")
 
 
 kbl(
@@ -1365,7 +1347,6 @@ As shown in Table S17 and S18, the usability rating of triage metrics is consist
 
 
 ```{r reallocation vs allocations stat, echo=FALSE}
-options(OutDec="\xB7")
 
 ###glmer model for full and no triage random intercept ID
 ##lme model for each measure separately
@@ -1497,9 +1478,7 @@ countrycount=1
 
 ```
 
-
 ```{r reallocation vs allocation YG S17, echo=FALSE}
-options(OutDec="\xB7")
 
 kbl(
   full_yg_alloc,
@@ -1519,7 +1498,6 @@ kbl(
 ```
 
 ```{r reallocation vs allocation MM S18, echo=FALSE}
-options(OutDec="\xB7")
 
 kbl(
   dat,
@@ -1553,7 +1531,6 @@ Figure S1 displays the same information as Figure 1 in the main article, only ap
 
 ```{r demography stats reallocation, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-options(OutDec="\xB7")
 
 
 #belonging to the full triage group
@@ -1709,7 +1686,6 @@ full_yg=rbind(dat_bra, dat_fra, dat_jap, dat_usa)
 
 
 ```{r main result stat Yougov re-allocation, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-options(OutDec="\xB7")
 
 ####statistical assasment of the main results
 #everything by country
@@ -1877,7 +1853,6 @@ rejector_rate_YG=rejector_rate
 
 ``` {r main result tables Yougov re-allocation T20 S19, echo=FALSE}
 options(knitr.kable.NA = '-')
-options(OutDec="\xB7")
 
 kbl(
   country_difference_YG,
@@ -1897,7 +1872,6 @@ kbl(
 ```
 
 ```{r main result stat MM re-allocation, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-options(OutDec="\xB7")
 
 ####statistical assasment of the main results
 #everything by country
@@ -2067,7 +2041,6 @@ rejector_rate_MM=rejector_rate
 ```
 
 ``` {r main result MM tables reallocation T23 S20, echo=FALSE}
-options(OutDec="\xB7")
 
 kbl(
   country_difference_MM,
@@ -2088,7 +2061,6 @@ kbl(
 
 
 ``` {r Yougov vs MM reallocation, echo=FALSE}
-options(OutDec="\xB7")
 
 
 Main_Yougov$sample=1
@@ -2162,7 +2134,6 @@ for (i in colnames(scale_diff2)){
 ```
 
 ```{r coherence table reallocation T26 S21, echo=FALSE}
-options(OutDec="\xB7")
 
 
 kbl(
@@ -2186,7 +2157,6 @@ kbl(
 
 
 ```{r demography results tables YG reallocation T18 S22, echo=FALSE}
-options(OutDec="\xB7")
 
 
 kbl(
@@ -2208,7 +2178,6 @@ kbl(
 ```
 
 ```{r dem results tables MM reallocation T19 S23, echo=FALSE}
-options(OutDec="\xB7")
 
 
 kbl(
@@ -2244,7 +2213,6 @@ Figure S2 displays the same information as Figure 2 in the main article, only ap
 
 ``` {r main result tables Yougov re-allocation T21-22 S24 S25, echo=FALSE}
 options(knitr.kable.NA = '-')
-options(OutDec="\xB7")
 
 kbl(
   rejector_results_YG,
@@ -2281,7 +2249,6 @@ kbl(
 
 
 ``` {r main result MM tables reallocation T24-25 S26 S27, echo=FALSE}
-options(OutDec="\xB7")
 
 kbl(
   rejector_results_MM,
@@ -2385,7 +2352,6 @@ ggplot(gra, aes(fill = template, x=variable, y=est)) +
 
 
 ```{r order effects stat, echo=FALSE}
-options(OutDec="\xB7")
 
 #first, separate columns "First" "Second" etc
 Main_MM$order=Main_MM$reviewOrder_covidq1
